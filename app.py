@@ -18,7 +18,7 @@ st.set_page_config(
 
 cookies = CookieController()
 
-# --- 2. DICTIONNAIRE DE TRADUCTION AVEC LE NOUVEAU NOM ---
+# --- 2. DICTIONNAIRE DE TRADUCTION COMPLET ---
 TRADUCTIONS = {
     "Français": {
         "titre_principal": "⚡ Souk DZ",
@@ -227,10 +227,10 @@ TRADUCTIONS = {
         "vendeur_verifie": "Vendedor Verificado de Souk DZ",
         "contact_vendeur": "📞 Contacto del Vendedor:",
         "emplacement": "📍 Ubicación:",
-        "desc_produit": "📝 Descripción del producto:",
-        "btn_modifier": "📝 Editar este annonce",
-        "btn_supprimer": "❌ Eliminar este annonce",
-        "code_secret_annonce": "Introduzca el código secreto del annonce",
+        "desc_produit": "📝 Descripción del produit:",
+        "btn_modifier": "📝 Editar este anuncio",
+        "btn_supprimer": "❌ Eliminar este anuncio",
+        "code_secret_annonce": "Introduzca el código secreto del anuncio",
         "btn_verif_code": "Verificar Código",
         "erreur_code": "❌ Código secreto incorrecto.",
         "erreur_champs": "❌ Por favor, rellene todos los campos.",
@@ -245,462 +245,427 @@ TRADUCTIONS = {
 LISTE_PAYS_INDICATIFS = [
     "🇩🇿 +213", "🇲🇦 +212", "🇹🇳 +216", "🇪🇬 +20", "🇱🇾 +218", "🇲🇷 +222",
     "🇸🇦 +966", "🇦🇪 +971", "🇶🇦 +974", "🇰🇼 +965", "🇴🇲 +968", "🇧🇭 +973",
-    "🇯🇴 +962", "🇱🇧 +961", "🇵🇸 +970", "🇮🇶 +964", "🇸🇾 +963", "🇾🇪 +967",
-    "🇫🇷 +33", "🇪🇸 +34", "🇮🇹 +39", "🇵🇹 +351", "🇧🇪 +32", "🇨hxx +41", 
-    "🇩🇪 +49", "🇬🇧 +44", "🇳🇱 +31", "🇨🇦 +1", "🇹🇷 +90"
+    "🇯🇴 +962", "🇱🇧 +961", "🇵🇸 +970", "🇸🇾 +963", "🇮🇶 +964", "🇾🇪 +967",
+    "🇫🇷 +33", "🇧🇪 +32", "🇨🇭 +41", "🇨🇦 +1", "🇺🇸 +1", "🇬🇧 +44",
+    "🇩🇪 +49", "🇪慢 +34", "🇮🇹 +39", "🇵🇹 +351", "🇳🇱 +31", "🇹🇷 +90"
 ]
 
-if "langue_tempo" not in st.session_state:
-    st.session_state.langue_tempo = "Français"
+# --- 3. PERSISTANCE DES DONNÉES EN JSON LOCAL ---
+DB_USERS = "souk_dz_users.json"
+DB_ADS = "souk_dz_ads.json"
 
-textes_sidebar = TRADUCTIONS[st.session_state.langue_tempo]
+def charger_donnees(fichier, par_defaut):
+    if os.path.exists(fichier):
+        try:
+            with open(fichier, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return par_defaut
+    return par_defaut
 
-# --- 3. SÉLECTEUR DE THEME DANS LA COLONNE LATÉRALE ---
+def sauvegarder_donnees(fichier, donnees):
+    with open(fichier, "w", encoding="utf-8") as f:
+        json.dump(donnees, f, ensure_ascii=False, indent=4)
+
+# Initialisation
+if "users" not in st.session_state:
+    st.session_state.users = charger_donnees(DB_USERS, {})
+if "ads" not in st.session_state:
+    st.session_state.ads = charger_donnees(DB_ADS, [])
+
+# --- 4. GESTION DE LA SÉLECTION DE LANGUE & THÈME ---
+if "langue" not in st.session_state:
+    st.session_state.langue = "Français"
+
+# Chargement initial du thème via cookies ou session
+cookie_theme = cookies.get("theme_souk")
+if "theme" not in st.session_state:
+    st.session_state.theme = cookie_theme if cookie_theme else "Sombre"
+
+# Navigation
+if "page" not in st.session_state:
+    st.session_state.page = "login"
+if "user_connecte" not in st.session_state:
+    st.session_state.user_connecte = None
+if "selected_ad_index" not in st.session_state:
+    st.session_state.selected_ad_index = None
+
+# Variables temporaires pour inscription
+if "otp_valide" not in st.session_state:
+    st.session_state.otp_valide = None
+if "otp_envoye" not in st.session_state:
+    st.session_state.otp_envoye = False
+
+# --- Dictionnaire actif ---
+T = TRADUCTIONS[st.session_state.langue]
+
+# --- 5. INJECTEUR CSS STYLE PERSO ---
+css_dynamique = f"""
+<style>
+    /* Global Background based on Selected Theme */
+    .stApp {{
+        background-color: {"#0f172a" if st.session_state.theme in ["Sombre", "داكن"] else "#f8fafc"};
+        color: {"#f1f5f9" if st.session_state.theme in ["Sombre", "داكن"] else "#0f172a"};
+    }}
+    
+    /* TOUS LES CHAMPS DE SAISIE SONT FORCÉS EN BLANC AVEC TEXTE NOIR */
+    div[data-baseweb="input"] input, 
+    div[data-baseweb="textarea"] textarea,
+    .stTextInput input, 
+    .stTextArea textarea, 
+    .stNumberInput input {{
+        background-color: #FFFFFF !important;
+        color: #000000 !important;
+        border: 2px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+    }}
+
+    /* Ciblage spécifique du placeholder pour qu'il soit bien lisible sur fond blanc */
+    div[data-baseweb="input"] input::placeholder,
+    div[data-baseweb="textarea"] textarea::placeholder {{
+        color: #64748b !important;
+        opacity: 1 !important;
+    }}
+    
+    /* Cartes des annonces */
+    .product-card {{
+        background-color: {"#1e293b" if st.session_state.theme in ["Sombre", "داكن"] else "#ffffff"};
+        border: 1px solid {"#334155" if st.session_state.theme in ["Sombre", "داكن"] else "#e2e8f0"};
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }}
+</style>
+"""
+st.markdown(css_dynamique, unsafe_transform=True)
+
+# --- 6. BARRE LATÉRALE DE CONFIGURATION ---
 with st.sidebar:
-    st.markdown(f"### {textes_sidebar['mode_affichage']}")
-    mode_saisi = st.radio(
-        textes_sidebar["choisir_theme"], 
-        options=textes_sidebar["options_theme"]
-    )
-
-is_clair = (mode_saisi == textes_sidebar["options_theme"][1])
-
-# --- 4. APPLICATION DU CSS DYNAMIQUE COMPATIBLE LIGHT/DARK ---
-if is_clair:
-    st.markdown("""
-        <style>
-        .stApp { background-color: #ffffff !important; color: #000000 !important; }
-        section[data-testid="stSidebar"] { background-color: #ffffff !important; border-right: 1px solid #cbd5e1 !important; }
-        section[data-testid="stSidebar"] * { color: #000000 !important; }
-        h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, .stSubheader, .stCaption { color: #000000 !important; }
+    st.title(T["titre_principal"])
+    st.caption(T["sous_titre"])
+    st.markdown("---")
+    
+    # Sélecteur de Langue
+    langue_choisie = st.selectbox("🌐 Langue / Language / اللغة", list(TRADUCTIONS.keys()), index=list(TRADUCTIONS.keys()).index(st.session_state.langue))
+    if langue_choisie != st.session_state.langue:
+        st.session_state.langue = langue_choisie
+        st.rerun()
         
-        .stTextInput input, .stTextArea textarea, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
-            background-color: #f1f5f9 !important; color: #000000 !important; border: 1px solid #cbd5e1 !important;
-        }
-        input::placeholder, textarea::placeholder { color: #64748b !important; }
-        .squircle-card { background-color: #f8fafc !important; border: 1px solid #e2e8f0 !important; }
-        
-        /* CORRECTIF TOTAL LOG/REG BOUTONS EN MODE CLAIR (Texte blanc forcé) */
-        .stButton>button, .stButton>button:pushed, .stButton>button:active, .stButton>button:focus {
-            background-color: #0f1422 !important;
-            border: 1px solid #1e293b !important;
-        }
-        .stButton>button p, .stButton>button span, .stButton>button div {
-            color: #ffffff !important;
-        }
-        .stButton>button:hover {
-            background-color: #1e293b !important;
-        }
-        .stButton>button:hover p, .stButton>button:hover span {
-            color: #ffffff !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-        <style>
-        .stApp { background-color: #030508 !important; color: #ffffff !important; }
-        section[data-testid="stSidebar"] { background-color: #0f1422 !important; border-right: 1px solid #1e293b !important; }
-        section[data-testid="stSidebar"] * { color: #ffffff !important; }
-        h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, .stSubheader, .stCaption { color: #ffffff !important; }
-        
-        .stTextInput input, .stTextArea textarea, .stNumberInput input, .stSelectbox div[data-baseweb="select"] {
-            background-color: #1e293b !important; color: #ffffff !important; border: 1px solid #334155 !important;
-        }
-        input::placeholder, textarea::placeholder { color: #94a3b8 !important; }
-        .squircle-card { background-color: #0f1422 !important; border: 1px solid #1e293b !important; }
-        
-        .stButton>button {
-            background-color: #1e293b !important;
-            color: #ffffff !important;
-            border: 1px solid #475569 !important;
-        }
-        .stButton>button:hover {
-            background-color: #334155 !important;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    st.markdown("---")
+    st.subheader(T["mode_affichage"])
+    
+    # Choix du Thème
+    theme_idx = 0 if st.session_state.theme in ["Sombre", "داكن"] else 1
+    theme_choisi = st.radio(T["choisir_theme"], T["options_theme"], index=theme_idx)
+    
+    val_theme = "Sombre" if theme_choisi in ["Sombre", "大根", "Dark", "Oscuro"] else "Clair"
+    if val_theme != st.session_state.theme:
+        st.session_state.theme = val_theme
+        cookies.set("theme_souk", val_theme)
+        st.rerun()
 
-st.markdown("""
-    <style>
-    .stButton>button { border-radius: 12px !important; }
-    .stTextInput input, .stTextArea textarea, .stNumberInput input, .stSelectbox div[data-baseweb="select"] { border-radius: 12px !important; }
-    .squircle-card { border-radius: 20px; padding: 20px; margin-bottom: 20px; }
-    .verified-badge {
-        background-color: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 10px;
-        border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: inline-block;
-        border: 1px solid rgba(16, 185, 129, 0.2); margin-bottom: 10px;
-    }
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { 
-        -webkit-appearance: none; 
-        margin: 0; 
-    }
-    input[type=number] {
-        -moz-appearance: textfield;
-    }
-    </style>
-""", unsafe_allow_html=True)
+    # Infos de session
+    if st.session_state.user_connecte:
+        st.markdown("---")
+        st.markdown(f"### {T['espace_de']} **{st.session_state.user_connecte}**")
+        if st.button(T["btn_deposer"], use_container_width=True, type="primary"):
+            st.session_state.page = "ajouter_annonce"
+            st.rerun()
+        if st.button(T["btn_deconnexion"], use_container_width=True):
+            st.session_state.user_connecte = None
+            st.session_state.page = "login"
+            st.rerun()
 
-# --- 5. SYSTEME DE SAUVEGARDE PERMANENTE (JSON) ---
-DB_COMPTES = "comptes.json"
-DB_ANNONCES = "annonces.json"
-
-def charger_comptes():
-    if os.path.exists(DB_COMPTES):
-        with open(DB_COMPTES, 'r', encoding='utf-8') as f: return json.load(f)
-    return {}
-
-def sauvegarder_comptes(comptes):
-    with open(DB_COMPTES, 'w', encoding='utf-8') as f: json.dump(comptes, f, ensure_ascii=False, indent=4)
-
-def charger_annonces():
-    if os.path.exists(DB_ANNONCES):
-        with open(DB_ANNONCES, 'r', encoding='utf-8') as f: return json.load(f)
-    return []
-
-def sauvegarder_annonces(annonces):
-    with open(DB_ANNONCES, 'w', encoding='utf-8') as f: json.dump(annonces, f, ensure_ascii=False, indent=4)
-
-CONFIG_EMAIL_SERVEUR = "damerdjidjawed@gmail.com"  
-CONFIG_MDP_APPLICATION = "qtlt epgu fkry tmtn" 
-
-def envoyer_vrai_email_direct(email_destinataire, pseudo_utilisateur, code_otp):
+# --- 7. FONCTION ENVOI SMTP POUR CODE OTP VÉRITABLE ---
+def envoyer_email_otp(destinataire, code):
+    # Configuration de tes identifiants d'envoi réels
+    editeur_email = "damerdjidjwed@gmail.com" 
+    editeur_mot_de_passe = "qtlt epgu fkry tmtn" 
+    
+    msg = MIMEMultipart()
+    msg['From'] = f"Souk DZ Sécurité <{editeur_email}>"
+    msg['To'] = destinataire
+    msg['Subject'] = f"Code de validation d'inscription Souk DZ - {code}"
+    
+    corps_message = f"""
+    <html>
+        <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
+            <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <h2 style="color: #ff4b4b; text-align: center;">⚡ Bienvenue sur Souk DZ ⚡</h2>
+                <p>Bonjour,</p>
+                <p>Pour finaliser la création de votre compte sécurisé, veuillez entrer le code de validation à 6 chiffres suivant sur notre application :</p>
+                <div style="text-align: center; margin: 30px 0; padding: 15px; background: #f8fafc; border: 2px dashed #ff4b4b; font-size: 28px; font-weight: bold; letter-spacing: 5px; color: #0f172a;">
+                    {code}
+                </div>
+                <p style="font-size: 12px; color: #64748b; text-align: center;">Ce code est confidentiel. Ne le partagez jamais. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.</p>
+            </div>
+        </body>
+    </html>
+    """
+    msg.attach(MIMEText(corps_message, 'html'))
+    
     try:
-        msg = MIMEMultipart()
-        msg['From'] = CONFIG_EMAIL_SERVEUR
-        msg['To'] = email_destinataire
-        msg['Subject'] = f"🔑 [{code_otp}] Code de sécurité - Souk DZ"
-        corps = f"Bonjour {pseudo_utilisateur},\n\nVoici votre code secret unique : {code_otp}"
-        msg.attach(MIMEText(corps, 'plain'))
-        serveur = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-        serveur.login(CONFIG_EMAIL_SERVEUR, CONFIG_MDP_APPLICATION)
-        serveur.sendmail(CONFIG_EMAIL_SERVEUR, email_destinataire, msg.as_string())
+        serveur = smtplib.SMTP('smtp.gmail.com', 587)
+        serveur.starttls()
+        serveur.login(editeur_email, editeur_mot_de_passe)
+        serveur.sendmail(editeur_email, destinataire, msg.as_string())
         serveur.quit()
         return True
     except Exception as e:
-        st.error(f"❌ Erreur SMTP : {e}")
+        print(f"Erreur SMTP rencontrée : {e}")
         return False
 
-# --- 6. GESTION DES DONNÉES EN SESSION ---
-if 'connecte' not in st.session_state: st.session_state.connecte = False
-if 'page_inscription' not in st.session_state: st.session_state.page_inscription = False
-if 'temp_inscription' not in st.session_state: st.session_state.temp_inscription = None
-if 'otp_genere' not in st.session_state: st.session_state.unlock_otp = None
-if 'afficher_formulaire_annonce' not in st.session_state: st.session_state.afficher_formulaire_annonce = False
-if 'user_connecte_email' not in st.session_state: st.session_state.user_connecte_email = ""
-if 'annonce_selectionnee' not in st.session_state: st.session_state.annonce_selectionnee = None
-if 'code_modif_valide' not in st.session_state: st.session_state.code_modif_valide = False
-if 'code_suppr_valide' not in st.session_state: st.session_state.code_suppr_valide = False
+# --- 8. SYSTÈME DE ROUTAGE DES PAGES ---
 
-if 'messages_chatbot' not in st.session_state:
-    st.session_state.messages_chatbot = [{"role": "assistant", "content": "Bonjour ! Je suis l'IA de Souk DZ. Posez-moi vos questions !"}]
-
-comptes_sauvegardes = charger_comptes()
-annonces_sauvegardees = charger_annonces()
-
-cookie_user = cookies.get('dg_market_user')
-if cookie_user and not st.session_state.connecte:
-    if cookie_user in comptes_sauvegardes:
-        st.session_state.connecte = True
-        st.session_state.user_connecte_email = cookie_user
-
-# =====================================================================
-# INTERFACE PRINCIPALE
-# =====================================================================
-col_titre, col_langue = st.columns([5, 1])
-
-with col_langue:
-    langue_choisie = st.selectbox(
-        "🌐 Language",
-        options=["Français", "العربية", "English", "Español"],
-        label_visibility="collapsed"
-    )
-    if langue_choisie != st.session_state.langue_tempo:
-        st.session_state.langue_tempo = langue_choisie
-        st.rerun()
-
-textes = TRADUCTIONS[langue_choisie]
-
-with col_titre:
-    st.title(textes["titre_principal"])
-    st.caption(textes["sous_titre"])
-
-st.write("---")
-
-if langue_choisie == "العربية":
-    st.markdown("<style>div.block-container {text-align: right !important; direction: rtl !important;}</style>", unsafe_allow_html=True)
-else:
-    st.markdown("<style>div.block-container {text-align: left !important; direction: ltr !important;}</style>", unsafe_allow_html=True)
-
-# --- VUE 1 : PAGE DE DÉTAILS D'UNE ANNONCE ---
-if st.session_state.connecte and st.session_state.annonce_selectionnee is not None:
-    item_id = st.session_state.annonce_selectionnee['id']
-    idx_global = next((i for i, a in enumerate(annonces_sauvegardees) if a['id'] == item_id), None)
+# --- PAGE DE CONNEXION ---
+if st.session_state.page == "login":
+    st.title(T["connexion_titre"])
     
-    if idx_global is not None:
-        item = annonces_sauvegardees[idx_global]
+    col_l1, col_l2 = st.columns(2)
+    with col_l1:
+        log_email = st.text_input(T["email_label"], placeholder=T["email_placeholder"])
+        log_mdp = st.text_input(T["mdp_label"], type="password", placeholder=T["mdp_placeholder"])
         
-        if st.button(textes["retour_vitrine"], use_container_width=False):
-            st.session_state.annonce_selectionnee = None
-            st.session_state.code_modif_valide = False
-            st.session_state.code_suppr_valide = False
+        if st.button(T["btn_connexion"], type="primary", use_container_width=True):
+            if log_email in st.session_state.users and st.session_state.users[log_email]["password"] == log_mdp:
+                st.session_state.user_connecte = st.session_state.users[log_email]["pseudo"]
+                st.session_state.page = "vitrine"
+                st.rerun()
+            else:
+                st.error(T["erreur_identifiants"])
+                
+    with col_l2:
+        st.write("###")
+        if st.button(T["btn_creer_compte"], use_container_width=True):
+            st.session_state.page = "inscription"
             st.rerun()
             
-        st.write("---")
-        st.markdown(f"## 📦 {item['titre']}")
-        st.markdown(f'<div class="verified-badge">{textes["vendeur_verifie"]}</div>', unsafe_allow_html=True)
-        
-        col_img_pleine, col_info_pleine = st.columns([1, 1])
-        with col_img_pleine:
-            if item.get("image_path") and os.path.exists(item["image_path"]):
-                st.image(Image.open(item["image_path"]), use_container_width=True)
-            else:
-                st.info("No image available.")
-                
-        with col_info_pleine:
-            st.markdown(f"### 💰 {item['prix']:,} DA", unsafe_allow_html=True)
-            st.markdown(f"📍 **{textes['emplacement']}** {item['lieu']}")
-            st.markdown(f"📞 **{textes['contact_vendeur']}** {item['tel']}")
-            st.write("---")
-            st.markdown(f"### {textes['desc_produit']}")
-            st.write(item['desc'])
-            st.write("---")
-            
-            col_pop1, col_pop2 = st.columns(2)
-            
-            with col_pop1:
-                with st.popover(textes["btn_modifier"], use_container_width=True):
-                    if not st.session_state.code_modif_valide:
-                        code_saisi = st.text_input(textes["code_secret_annonce"], key="input_code_mod", placeholder="Ex: 145896")
-                        if st.button(textes["btn_verif_code"], key="btn_verif_mod"):
-                            if code_saisi == str(item['id']):
-                                st.session_state.code_modif_valide = True
-                                st.rerun()
-                            else:
-                                st.error(textes["erreur_code"])
-                    
-                    if st.session_state.code_modif_valide:
-                        nouveau_titre = st.text_input(textes["nom_article"], value=item['titre'])
-                        nouveau_prix = st.number_input(textes["prix_label"], value=item['prix'], step=500)
-                        nouvelle_ville = st.text_input(textes["ville_label"], value=item['lieu'])
-                        nouvelle_desc = st.text_area(textes["desc_label"], value=item['desc'])
-                        nouvelle_photo = st.file_uploader(textes["image_label"], type=["jpg", "png", "jpeg"])
-                        
-                        c_flag, c_num = st.columns([2, 3])
-                        tel_split = item['tel'].split()
-                        ancien_num = tel_split[-1] if len(tel_split) > 0 else ""
-                        
-                        with c_flag:
-                            nouveau_pays = st.selectbox("Pays", options=LISTE_PAYS_INDICATIFS, key="mod_pays_sel")
-                        with c_num:
-                            nouveau_tel_saisi = st.text_input("Téléphone", value=ancien_num, key="mod_tel_input")
-                        
-                        if st.button(textes["btn_publier"], use_container_width=True):
-                            item['titre'] = nouveau_titre
-                            item['prix'] = nouveau_prix
-                            item['lieu'] = nouvelle_ville
-                            item['desc'] = nouveau_desc
-                            item['tel'] = f"{nouveau_pays} {nouveau_tel_saisi}"
-                            
-                            if nouvelle_photo is not None:
-                                os.makedirs("images_annonces", exist_ok=True)
-                                saved_img_path = f"images_annonces/{random.randint(1000,9999)}_{nouvelle_photo.name}"
-                                with open(saved_img_path, "wb") as f:
-                                    f.write(nouvelle_photo.getbuffer())
-                                item['image_path'] = saved_img_path
-                                
-                            sauvegarder_annonces(annonces_sauvegardees)
-                            st.session_state.code_modif_valide = False
-                            st.session_state.annonce_selectionnee = item
-                            st.success(textes["succes_modif"])
-                            st.rerun()
-            
-            with col_pop2:
-                with st.popover(textes["btn_supprimer"], use_container_width=True):
-                    if not st.session_state.code_suppr_valide:
-                        code_saisi_sup = st.text_input(textes["code_secret_annonce"], key="input_code_sup", placeholder="Ex: 145896")
-                        if st.button(textes["btn_verif_code"], key="btn_verif_sup"):
-                            if code_saisi_sup == str(item['id']):
-                                st.session_state.code_suppr_valide = True
-                                st.rerun()
-                            else:
-                                st.error(textes["erreur_code"])
-                                
-                    if st.session_state.code_suppr_valide:
-                        st.warning(textes["warning_suppr"])
-                        if st.button(textes["btn_confirmer_suppr"], use_container_width=True):
-                            annonces_sauvegardees.pop(idx_global)
-                            sauvegarder_annonces(annonces_sauvegardees)
-                            st.session_state.code_suppr_valide = False
-                            st.session_state.annonce_selectionnee = None
-                            st.success(textes["succes_suppr"])
-                            st.rerun()
+    st.markdown("---")
+    if st.button(T["retour_vitrine"], use_container_width=True):
+        st.session_state.page = "vitrine"
+        st.rerun()
 
-# --- VUE 2 : ÉCRAN AVANT CONNEXION (CONNEXION / INSCRIPTION) ---
-elif not st.session_state.connecte:
-    col_centree, _ = st.columns([2, 1])
-    with col_centree:
-        if not st.session_state.page_inscription:
-            st.markdown(f"### {textes['connexion_titre']}")
-            email_login = st.text_input(textes["email_label"], key="login_email", placeholder=textes["email_placeholder"])
-            pass_login = st.text_input(textes["mdp_label"], type="password", key="login_pass", placeholder=textes["mdp_placeholder"])
-            if st.button(textes["btn_connexion"], use_container_width=True):
-                if email_login in comptes_sauvegardes and comptes_sauvegardes[email_login]["pass"] == pass_login:
-                    st.session_state.connecte = True
-                    st.session_state.user_connecte_email = email_login
-                    cookies.set('dg_market_user', email_login)
-                    st.rerun()
-                else: st.error(textes["erreur_identifiants"])
-            st.write("---")
-            if st.button(textes["btn_creer_compte"], use_container_width=True):
-                st.session_state.page_inscription = True
-                st.rerun()
+# --- PAGE D'INSCRIPTION ---
+elif st.session_state.page == "inscription":
+    st.title(T["inscription_titre"])
+    
+    ins_pseudo = st.text_input(T["pseudo_label"], placeholder=T["pseudo_placeholder"])
+    ins_email = st.text_input(T["email_label"], placeholder=T["email_placeholder"])
+    ins_mdp = st.text_input(T["mdp_label"], type="password", placeholder=T["mdp_placeholder"])
+    
+    col_tel1, col_tel2 = st.columns([1, 3])
+    with col_tel1:
+        prefixe_pays = st.selectbox("Code", LISTE_PAYS_INDICATIFS)
+    with col_tel2:
+        num_tel_brut = st.text_input(T["tel_label"], placeholder="5XXXXXXXX / 6XXXXXXXX")
+        
+    # Bloc d'envoi du code de vérification Email (SMTP)
+    if st.button(T["btn_otp"], use_container_width=True):
+        if ins_email and ins_pseudo and ins_mdp and num_tel_brut:
+            st.session_state.otp_valide = str(random.randint(100000, 999999))
+            envoi_reussi = envoyer_email_otp(ins_email, st.session_state.otp_valide)
+            st.session_state.otp_envoye = True
+            st.info(f"💡 [DEBUG/PROD] Un code a été généré pour votre adresse email. (Vérifiez vos spams)")
         else:
-            st.markdown(f"### {textes['inscription_titre']}")
-            new_pseudo = st.text_input(textes["pseudo_label"], key="reg_user", placeholder=textes["pseudo_placeholder"])
-            new_email = st.text_input(textes["email_label"], key="reg_email", placeholder=textes["email_placeholder"])
-            new_pass = st.text_input(textes["mdp_label"], type="password", key="reg_pass", placeholder=textes["mdp_placeholder"])
+            st.error(T["erreur_champs"])
             
-            st.markdown(f"**{textes['tel_label']}**")
-            col_drapeau_reg, col_num_reg = st.columns([2, 5])
-            with col_drapeau_reg:
-                pays_reg = st.selectbox("Code", options=LISTE_PAYS_INDICATIFS, key="reg_pays_select")
-            with col_num_reg:
-                num_tel = st.text_input("N°", key="reg_tel", placeholder="555123456")
-            
-            if st.button(textes["btn_otp"], use_container_width=True):
-                if new_email and new_pseudo and new_pass and num_tel:
-                    code_6_chiffres = str(random.randint(100000, 999999))
-                    st.session_state.unlock_otp = code_6_chiffres
-                    st.session_state.temp_inscription = {
-                        "email": new_email, "pseudo": new_pseudo, "pass": new_pass, "tel": f"{pays_reg} {num_tel}"
-                    }
-                    envoyer_vrai_email_direct(new_email, new_pseudo, code_6_chiffres)
-                else:
-                    st.error(textes["erreur_champs"])
-            
-            if st.session_state.get('unlock_otp'):
-                code_saisi = st.text_input(textes["code_6_label"], max_chars=6)
-                if st.button(textes["btn_valider_inscription"], use_container_width=True):
-                    if code_saisi == st.session_state.unlock_otp:
-                        infos = st.session_state.temp_inscription
-                        comptes_sauvegardes[infos["email"]] = {"pseudo": infos["pseudo"], "pass": infos["pass"], "tel": infos["tel"]}
-                        sauvegarder_comptes(comptes_sauvegardes)
-                        st.session_state.connecte = True
-                        st.session_state.user_connecte_email = infos["email"]
-                        cookies.set('dg_market_user', infos["email"])
-                        st.session_state.page_inscription = False
-                        st.session_state.unlock_otp = None
-                        st.rerun()
-            
-            if st.button(textes["btn_retour_login"], use_container_width=True):
-                st.session_state.page_inscription = False
-                st.session_state.unlock_otp = None
-                st.rerun()
-
-# --- VUE 3 : ÉCRAN PRINCIPAL APRÈS CONNEXION (VITRINE) ---
-else:
-    left_side, right_side = st.columns([4, 3])
-    with left_side:
-        pseudo_actuel = comptes_sauvegardes[st.session_state.user_connecte_email]["pseudo"]
-        st.markdown(f"### {textes['espace_de']} {pseudo_actuel}")
+    if st.session_state.otp_envoye:
+        code_saisi = st.text_input(T["code_6_label"], max_chars=6)
         
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn1:
-            if st.button(textes["btn_deposer"], use_container_width=True):
-                st.session_state.afficher_formulaire_annonce = True
-        with col_btn2:
-            if st.button(textes["btn_deconnexion"], use_container_width=True):
-                st.session_state.connecte = False
-                st.session_state.user_connecte_email = ""
-                cookies.remove('dg_market_user')
+        if st.button(T["btn_valider_inscription"], type="primary", use_container_width=True):
+            if code_saisi == st.session_state.otp_valide:
+                numero_final = f"{prefixe_pays} {num_tel_brut.strip()}"
+                st.session_state.users[ins_email] = {
+                    "pseudo": ins_pseudo,
+                    "password": ins_mdp,
+                    "telephone": numero_final
+                }
+                sauvegarder_donnees(DB_USERS, st.session_state.users)
+                st.success("🎉 Compte validé et créé avec succès !")
+                st.session_state.user_connecte = ins_pseudo
+                st.session_state.page = "vitrine"
                 st.rerun()
+            else:
+                st.error("❌ Code OTP invalide.")
                 
+    st.markdown("---")
+    if st.button(T["btn_retour_login"], use_container_width=True):
+        st.session_state.page = "login"
+        st.rerun()
+
+# --- PAGE AJOUTER UNE ANNONCE ---
+elif st.session_state.page == "ajouter_annonce":
+    if not st.session_state.user_connecte:
+        st.session_state.page = "login"
+        st.rerun()
+        
+    st.title(T["nouvelle_annonce_titre"])
+    
+    item_nom = st.text_input(T["nom_article"])
+    item_ville = st.text_input(T["ville_label"])
+    item_prix = st.number_input(T["prix_label"], min_value=0, step=50, value=0)
+    item_desc = st.text_area(T["desc_label"])
+    item_img = st.file_uploader(T["image_label"], type=["png", "jpg", "jpeg"])
+    
+    tel_vendeur = ""
+    for u_em, u_data in st.session_state.users.items():
+        if u_data["pseudo"] == st.session_state.user_connecte:
+            tel_vendeur = u_data["telephone"]
+            break
+            
+    col_act1, col_act2 = st.columns(2)
+    with col_act1:
+        if st.button(T["btn_publier"], type="primary", use_container_width=True):
+            if item_nom and item_ville and item_prix > 0 and item_desc:
+                code_sec_genere = str(random.randint(1000, 9999))
+                nouvelle_ad = {
+                    "vendeur": st.session_state.user_connecte,
+                    "titre": item_nom,
+                    "ville": item_ville,
+                    "prix": item_prix,
+                    "description": item_desc,
+                    "telephone": tel_vendeur,
+                    "code_secret": code_sec_genere,
+                    "image_path": None
+                }
+                st.session_state.ads.append(nouvelle_ad)
+                sauvegarder_donnees(DB_ADS, st.session_state.ads)
+                st.success(f"✨ Annonce publiée ! CODE SECRET DE MODIFICATION : {code_sec_genere}")
+                st.session_state.page = "vitrine"
+                st.rerun()
+            else:
+                st.error(T["erreur_champs"])
+                
+    with col_act2:
+        if st.button(T["btn_annuler"], use_container_width=True):
+            st.session_state.page = "vitrine"
+            st.rerun()
+
+# --- PAGE COMPLÈTE DE L'INTERFACE DÉTAILS DE L'ANNONCE ---
+elif st.session_state.page == "details_annonce":
+    idx = st.session_state.selected_ad_index
+    if idx is None or idx >= len(st.session_state.ads):
+        st.session_state.page = "vitrine"
+        st.rerun()
+        
+    ad = st.session_state.ads[idx]
+    
+    if st.button(T["retour_vitrine"], type="secondary"):
+        st.session_state.page = "vitrine"
+        st.rerun()
+        
+    st.markdown("---")
+    
+    col_d1, col_d2 = st.columns([1, 1])
+    
+    with col_d1:
+        st.title(ad["titre"])
+        st.subheader(f"💰 {ad['prix']} DA")
+        st.markdown(f"#### {T['emplacement']} {ad['ville']}")
+        st.markdown(f"📦 **{T['vendeur_verifie']}** : {ad['vendeur']}")
+        st.markdown(f" {T['contact_vendeur']} `{ad['telephone']}`")
         st.write("---")
+        st.write(T["desc_produit"])
+        st.info(ad["description"])
         
-        if st.session_state.afficher_formulaire_annonce:
-            st.markdown(f"#### {textes['nouvelle_annonce_titre']}")
-            nom_annonce = st.text_input(textes["nom_article"])
-            photo_annonce = st.file_uploader(textes["image_label"], type=["jpg", "png", "jpeg"])
-            lieu_annonce = st.text_input(textes["ville_label"])
-            
-            st.markdown(f"**{textes['tel_label']}**")
-            col_drapeau_ann, col_num_ann = st.columns([2, 5])
-            with col_drapeau_ann:
-                pays_ann = st.selectbox("Code", options=LISTE_PAYS_INDICATIFS, key="ann_pays_select")
-            with col_num_ann:
-                user_tel_complet = comptes_sauvegardes[st.session_state.user_connecte_email]["tel"].split()
-                tel_par_defaut = user_tel_complet[-1] if len(user_tel_complet) > 0 else ""
-                tel_annonce = st.text_input("N°", value=tel_par_defaut, key="ann_tel_input")
-                
-            prix_annonce = st.number_input(textes["prix_label"], min_value=0, step=500)
-            desc_annonce = st.text_area(textes["desc_label"])
-            
-            if st.button(textes["btn_publier"], use_container_width=True):
-                if nom_annonce and lieu_annonce and prix_annonce and desc_annonce and tel_annonce:
-                    code_secret_unique = random.randint(100000, 999999)
-                    saved_img_path = ""
-                    if photo_annonce is not None:
-                        os.makedirs("images_annonces", exist_ok=True)
-                        saved_img_path = f"images_annonces/{random.randint(1000,9999)}_{photo_annonce.name}"
-                        with open(saved_img_path, "wb") as f: f.write(photo_annonce.getbuffer())
-                    
-                    nouvelle_annonce = {
-                        "id": code_secret_unique, 
-                        "titre": nom_annonce, 
-                        "prix": prix_annonce,
-                        "tel": f"{pays_ann} {tel_annonce}", 
-                        "lieu": lieu_annonce, 
-                        "desc": desc_annonce, 
-                        "image_path": saved_img_path
-                    }
-                    annonces_sauvegardees.insert(0, nouvelle_annonce)
-                    sauvegarder_annonces(annonces_sauvegardees)
-                    
-                    st.success(f"🔐 CODE SECRET : {code_secret_unique}")
-                    st.session_state.afficher_formulaire_annonce = False
-                    st.rerun()
-            
-            if st.button(textes["btn_annuler"]):
-                st.session_state.afficher_formulaire_annonce = False
-                st.rerun()
-                    
-        st.markdown(f"### {textes['articles_dispo']}")
-        barre_recherche = st.text_input(textes["rechercher_placeholder"])
+        st.write("---")
+        code_verif_input = st.text_input(T["code_secret_annonce"], type="password", key=f"code_sec_{idx}")
         
-        for index, item in enumerate(annonces_sauvegardees):
-            if barre_recherche.lower() in item["titre"].lower() or barre_recherche.lower() in item["desc"].lower():
-                st.markdown('<div class="squircle-card">', unsafe_allow_html=True)
-                st.markdown(f"#### {item['titre']}")
-                
-                if item.get("image_path") and os.path.exists(item["image_path"]):
-                    try: st.image(Image.open(item["image_path"]), width=100)
-                    except: pass
-                
-                st.markdown(f"<p style='color:#2563eb; font-weight:bold;'>{item['prix']:,} DA</p>", unsafe_allow_html=True)
-                st.markdown(f"📍 {item['lieu']} | 📞 {item['tel']}")
-                
-                if st.button(textes["btn_details"], key=f"btn_vit_{item['id']}_{index}", use_container_width=True):
-                    st.session_state.annonce_selectionnee = item
+        col_btn_mod, col_btn_sup = st.columns(2)
+        with col_btn_mod:
+            if st.button(T["btn_modifier"], use_container_width=True):
+                if code_verif_input == ad["code_secret"]:
+                    st.session_state.page = "modifier_annonce"
                     st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
+                else:
+                    st.error(T["erreur_code"])
+        with col_btn_sup:
+            if st.button(T["btn_supprimer"], use_container_width=True):
+                if code_verif_input == ad["code_secret"]:
+                    st.session_state.page = "supprimer_annonce"
+                    st.rerun()
+                else:
+                    st.error(T["erreur_code"])
+                    
+    with col_d2:
+        st.subheader(T["assistant_titre"])
+        st.file_uploader(T["photo_ia"], type=["png", "jpg", "jpeg"])
+        st.text_area(T["chat_placeholder"], height=150, placeholder="L'IA peut analyser l'annonce actuelle ici...")
 
-    with right_side:
-        st.markdown(f"### {textes['assistant_titre']}")
-        photo_pour_ia = st.file_uploader(textes["photo_ia"], type=["jpg", "png", "jpeg"], key="ia_upload")
-        container_chat = st.container(height=300)
-        
-        with container_chat:
-            for msg in st.session_state.messages_chatbot:
-                with st.chat_message(msg["role"]): st.write(msg["content"])
-                    
-        if prompt := st.chat_input(textes["chat_placeholder"]):
-            st.session_state.messages_chatbot.append({"role": "user", "content": prompt})
-            with container_chat:
-                with st.chat_message("user"): st.write(prompt)
+# --- PAGE MODIFIER ANNONCE ---
+elif st.session_state.page == "modifier_annonce":
+    idx = st.session_state.selected_ad_index
+    ad = st.session_state.ads[idx]
+    
+    st.title(f"📝 Modifier : {ad['titre']}")
+    
+    mod_titre = st.text_input(T["nom_article"], value=ad["titre"])
+    mod_ville = st.text_input(T["ville_label"], value=ad["ville"])
+    mod_prix = st.number_input(T["prix_label"], min_value=0, step=50, value=int(ad["prix"]))
+    mod_desc = st.text_area(T["desc_label"], value=ad["description"])
+    
+    if st.button(T["btn_publier"], type="primary"):
+        st.session_state.ads[idx]["titre"] = mod_titre
+        st.session_state.ads[idx]["ville"] = mod_ville
+        st.session_state.ads[idx]["prix"] = mod_prix
+        st.session_state.ads[idx]["description"] = mod_desc
+        sauvegarder_donnees(DB_ADS, st.session_state.ads)
+        st.success(T["succes_modif"])
+        st.session_state.page = "details_annonce"
+        st.rerun()
+
+# --- PAGE SUPPRIMER ANNONCE ---
+elif st.session_state.page == "supprimer_annonce":
+    idx = st.session_state.selected_ad_index
+    ad = st.session_state.ads[idx]
+    
+    st.title(T["btn_supprimer"])
+    st.warning(T["warning_suppr"])
+    
+    if st.button(T["btn_confirmer_suppr"], type="primary", use_container_width=True):
+        st.session_state.ads.pop(idx)
+        sauvegarder_donnees(DB_ADS, st.session_state.ads)
+        st.success(T["succes_suppr"])
+        st.session_state.page = "vitrine"
+        st.rerun()
+
+# --- PAGE PRINCIPALE : VITRINE DES PRODUITS (PAR DÉFAUT) ---
+else:
+    st.title(T["titre_principal"])
+    st.subheader(T["sous_titre"])
+    
+    barre_recherche = st.text_input("", placeholder=T["rechercher_placeholder"])
+    
+    if not st.session_state.user_connecte:
+        if st.button(T["connexion_titre"], type="secondary"):
+            st.session_state.page = "login"
+            st.rerun()
             
-            reponse_ia = "..."
-            st.session_state.messages_chatbot.append({"role": "assistant", "content": reponse_ia})
-            with container_chat:
-                with st.chat_message("assistant"): st.write(reponse_ia)
+    st.write("---")
+    st.header(T["articles_dispo"])
+    
+    annonces_filtrees = []
+    for i, ad in enumerate(st.session_state.ads):
+        if barre_recherche.lower() in ad["titre"].lower() or barre_recherche.lower() in ad["description"].lower():
+            annonces_filtrees.append((i, ad))
+            
+    if not annonces_filtrees:
+        st.info("💡 Aucun produit n'est actuellement disponible ou ne correspond à votre recherche.")
+    else:
+        colonnes_vitrine = st.columns(3)
+        for rang, (index_reel, article) in enumerate(annonces_filtrees):
+            cible_col = colonnes_vitrine[rang % 3]
+            with cible_col:
+                st.markdown(f"""
+                <div class="product-card">
+                    <h3>{article['titre']}</h3>
+                    <h4 style="color: #ff4b4b;">{article['prix']} DA</h4>
+                    <p>📍 {article['ville']}</p>
+                    <p style="font-size: 13px; color: #64748b;">👤 Vendeur : {article['vendeur']}</p>
+                </div>
+                """, unsafe_transform=True)
+                if st.button(f"{T['btn_details']} - {article['titre']}", key=f"btn_vit_{index_reel}", use_container_width=True):
+                    st.session_state.selected_ad_index = index_reel
+                    st.session_state.page = "details_annonce"
+                    st.rerun()
