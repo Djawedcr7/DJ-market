@@ -1,12 +1,10 @@
 import streamlit as st
 import random
-import re
-import smtplib
 import json
 import os
+import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from PIL import Image
 
 # --- 1. CONFIGURATION DE LA PAGE ---
 st.set_page_config(
@@ -126,116 +124,6 @@ TRADUCTIONS = {
         "warning_suppr": "⚠️ تنبيه: هذا الإجراء سيحذف الإعلان نهائياً.",
         "btn_confirmer_suppr": "💥 تأكيد الحذف النهائي",
         "succes_suppr": "تم حذف الإعلان بنجاح."
-    },
-    "English": {
-        "titre_principal": "⚡ Souk DZ",
-        "sous_titre": "Secured Second-Hand Platform with Permanent Storage",
-        "mode_affichage": "🎨 Display Mode",
-        "choisir_theme": "Choose theme:",
-        "options_theme": ["Dark", "Light"],
-        "connexion_titre": "🔑 Login to your account",
-        "email_label": "Email Address",
-        "email_placeholder": "Enter your email",
-        "mdp_label": "Password",
-        "mdp_placeholder": "••••••••",
-        "btn_connexion": "Login",
-        "btn_creer_compte": "Create an account on Souk DZ",
-        "inscription_titre": "📝 Create an Account",
-        "pseudo_label": "Choose a Username",
-        "pseudo_placeholder": "Ex: Bob123",
-        "tel_label": "Phone Number *",
-        "btn_otp": "Request verification code ✉️",
-        "code_6_label": "Enter the 6 digits",
-        "btn_valider_inscription": "Confirm Registration 🎉",
-        "btn_retour_login": "Back to Login",
-        "espace_de": "👋 Welcome back,",
-        "btn_deposer": "➕ Post an Ad",
-        "btn_deconnexion": "🔴 Logout",
-        "nouvelle_annonce_titre": "🚀 New Advertisement",
-        "nom_article": "Item Name *",
-        "image_label": "Image",
-        "ville_label": "City *",
-        "prix_label": "Price (DA) *",
-        "desc_label": "Description *",
-        "btn_publier": "Publish on Market",
-        "btn_annuler": "Cancel",
-        "articles_dispo": "📚 Available Items",
-        "rechercher_placeholder": "🔍 Search the market...",
-        "btn_details": "👁️ View Details",
-        "assistant_titre": "🤖 Souk DZ AI Assistant",
-        "photo_ia": "📸 Photo for AI (Optional)",
-        "chat_placeholder": "Ask your question...",
-        "retour_vitrine": "⬅️ Back to showcase",
-        "vendeur_verifie": "Verified Souk DZ Seller",
-        "contact_vendeur": "📞 Seller Contact:",
-        "emplacement": "📍 Location:",
-        "desc_produit": "📝 Product Description:",
-        "btn_modifier": "📝 Edit this Ad",
-        "btn_supprimer": "❌ Delete this Ad",
-        "code_secret_annonce": "Enter the ad secret code",
-        "btn_verif_code": "Verify Code",
-        "erreur_code": "❌ Incorrect secret code.",
-        "erreur_champs": "❌ Please fill in all fields.",
-        "erreur_identifiants": "❌ Invalid credentials.",
-        "succes_modif": "✨ Modifications successfully saved!",
-        "warning_suppr": "⚠️ Warning: this action will permanently delete the item.",
-        "btn_confirmer_suppr": "💥 Confirm Permanent Deletion",
-        "succes_suppr": "Ad deleted successfully."
-    },
-    "Español": {
-        "titre_principal": "⚡ Souk DZ",
-        "sous_titre": "Plataforma Segura de Segunda Mano con Almacenamiento Permanente",
-        "mode_affichage": "🎨 Modo de visualización",
-        "choisir_theme": "Elegir tema:",
-        "options_theme": ["Oscuro", "Claro"],
-        "connexion_titre": "🔑 Iniciar sesión en su cuenta",
-        "email_label": "Correo Electrónico",
-        "email_placeholder": "Introduce tu correo",
-        "mdp_label": "Contraseña",
-        "mdp_placeholder": "••••••••",
-        "btn_connexion": "Iniciar Sesión",
-        "btn_creer_compte": "Crear una cuenta en Souk DZ",
-        "inscription_titre": "📝 Crear una Cuenta",
-        "pseudo_label": "Elija un Nombre de Usuario",
-        "pseudo_placeholder": "Ej: Bob123",
-        "tel_label": "Número de teléfono *",
-        "btn_otp": "Solicitar código de verificación ✉️",
-        "code_6_label": "Introduce los 6 dígitos",
-        "btn_valider_inscription": "Confirmar Registro 🎉",
-        "btn_retour_login": "Volver al Inicio de Sesión",
-        "espace_de": "👋 Espacio de",
-        "btn_deposer": "➕ Publicar un Anuncio",
-        "btn_deconnexion": "🔴 Cerrar Sesión",
-        "nouvelle_annonce_titre": "🚀 Nuevo Anuncio",
-        "nom_article": "Nombre del Artículo *",
-        "image_label": "Imagen",
-        "ville_label": "Ciudad *",
-        "prix_label": "Precio (DA) *",
-        "desc_label": "Descripción *",
-        "btn_publier": "Publicar en el Mercado",
-        "btn_annuler": "Cancelar",
-        "articles_dispo": "📚 Artículos Disponibles",
-        "rechercher_placeholder": "🔍 Buscar en el mercado...",
-        "btn_details": "👁️ Ver Detalles",
-        "assistant_titre": "🤖 Asistente de IA de Souk DZ",
-        "photo_ia": "📸 Foto para la IA (Opcional)",
-        "chat_placeholder": "Haga su pregunta...",
-        "retour_vitrine": "⬅️ Volver al escaparate",
-        "vendeur_verifie": "Vendedor Verificado de Souk DZ",
-        "contact_vendeur": "📞 Contacto del Vendedor:",
-        "emplacement": "📍 Ubicación:",
-        "desc_produit": "📝 Descripción del produit:",
-        "btn_modifier": "📝 Editar este anuncio",
-        "btn_supprimer": "❌ Eliminar este anuncio",
-        "code_secret_annonce": "Introduzca el código secreto del anuncio",
-        "btn_verif_code": "Verificar Código",
-        "erreur_code": "❌ Código secreto incorrecto.",
-        "erreur_champs": "❌ Por favor, rellene todos los campos.",
-        "erreur_identifiants": "❌ Credenciales incorrectas.",
-        "succes_modif": "✨ ¡Modificaciones guardadas correctamente!",
-        "warning_suppr": "⚠️ Advertencia: esta action eliminará permanentemente el artículo.",
-        "btn_confirmer_suppr": "💥 Confirmar Eliminación Permanente",
-        "succes_suppr": "Anuncio eliminado con éxito."
     }
 }
 
@@ -243,8 +131,7 @@ LISTE_PAYS_INDICATIFS = [
     "🇩🇿 +213", "🇲🇦 +212", "🇹🇳 +216", "🇪🇬 +20", "🇱🇾 +218", "🇲🇷 +222",
     "🇸🇦 +966", "🇦🇪 +971", "🇶🇦 +974", "🇰🇼 +965", "🇴🇲 +968", "🇧🇭 +973",
     "🇯🇴 +962", "🇱🇧 +961", "🇵🇸 +970", "🇸🇾 +963", "🇮🇶 +964", "🇾🇪 +967",
-    "🇫🇷 +33", "🇧🇪 +32", "🇨🇭 +41", "🇨🇦 +1", "🇺🇸 +1", "🇬🇧 +44",
-    "🇩🇪 +49", "🇪🇸 +34", "🇮🇹 +39", "🇵🇹 +351", "🇳🇱 +31", "🇹🇷 +90"
+    "🇫🇷 +33", "🇧🇪 +32", "🇨🇭 +41", "🇨🇦 +1", "🇺🇸 +1", "🇬🇧 +44"
 ]
 
 # --- 3. PERSISTANCE DES DONNÉES EN JSON LOCAL ---
@@ -264,20 +151,41 @@ def sauvegarder_donnees(fichier, donnees):
     with open(fichier, "w", encoding="utf-8") as f:
         json.dump(donnees, f, ensure_ascii=False, indent=4)
 
-# Initialisation
 if "users" not in st.session_state:
     st.session_state.users = charger_donnees(DB_USERS, {})
 if "ads" not in st.session_state:
     st.session_state.ads = charger_donnees(DB_ADS, [])
 
-# --- 4. GESTION DE LA SÉLECTION DE LANGUE & THÈME ---
+# --- 4. FONCTION D'ENVOI EMAIL OTP ---
+def envoyer_email_otp(destinataire, code):
+    editeur_email = "damerdjidjawed@gmail.com"  # 👈 LIGNE 145 : METS TON EMAIL ICI
+    editeur_mot_de_passe = "qtlt epgu fkry tmtn"  # 👈 LIGNE 146 : METS TON CODE DE 16 LETTRES ICI
+    
+    msg = MIMEMultipart()
+    msg['From'] = editeur_email
+    msg['To'] = destinataire
+    msg['Subject'] = f"Code de vérification Souk DZ : {code}"
+    
+    corps = f"Bonjour,\n\nVotre code de vérification pour valider votre inscription sur Souk DZ est : {code}\n\nCordialement,\nL'équipe Souk DZ."
+    msg.attach(MIMEText(corps, 'plain'))
+    
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(editeur_email, editeur_mot_de_passe)
+        text = msg.as_string()
+        server.sendmail(editeur_email, destinataire, text)
+        server.quit()
+        return True
+    except Exception as e:
+        print(f"Erreur d'envoi SMTP : {e}")
+        return False
+
 if "langue" not in st.session_state:
     st.session_state.langue = "Français"
-
 if "theme" not in st.session_state:
     st.session_state.theme = "Sombre"
 
-# Navigation
 if "page" not in st.session_state:
     st.session_state.page = "vitrine"
 if "user_connecte" not in st.session_state:
@@ -285,25 +193,22 @@ if "user_connecte" not in st.session_state:
 if "selected_ad_index" not in st.session_state:
     st.session_state.selected_ad_index = None
 
-# Variables temporaires pour inscription
 if "otp_valide" not in st.session_state:
     st.session_state.otp_valide = None
 if "otp_envoye" not in st.session_state:
     st.session_state.otp_envoye = False
 
-# --- Dictionnaire actif ---
-T = TRADUCTIONS[st.session_state.langue]
+T = TRADUCTIONS.get(st.session_state.langue, TRADUCTIONS["Français"])
 
 # --- 5. INJECTEUR CSS STYLE PERSO ---
 css_dynamique = f"""
 <style>
-    /* Global Background based on Selected Theme */
     .stApp {{
         background-color: {"#0f172a" if st.session_state.theme in ["Sombre", "داكن"] else "#f8fafc"};
         color: {"#f1f5f9" if st.session_state.theme in ["Sombre", "داكن"] else "#0f172a"};
     }}
     
-    /* TOUS LES CHAMPS DE SAISIE SONT FORCÉS EN BLANC AVEC TEXTE NOIR */
+    /* TOUS LES CHAMPS DE SAISIE EN BLANC AVEC TEXTE NOIR */
     div[data-baseweb="input"] input, 
     div[data-baseweb="textarea"] textarea,
     .stTextInput input, 
@@ -315,14 +220,17 @@ css_dynamique = f"""
         border-radius: 8px !important;
     }}
 
-    /* Ciblage spécifique du placeholder pour qu'il soit bien lisible sur fond blanc */
     div[data-baseweb="input"] input::placeholder,
     div[data-baseweb="textarea"] textarea::placeholder {{
         color: #64748b !important;
         opacity: 1 !important;
     }}
+
+    /* SUPPRESSION DES BOUTONS PLUS ET MOINS DES CHAMPS NUMÉRIQUES */
+    div[data-baseweb="input"] button {{
+        display: none !important;
+    }}
     
-    /* Cartes des annonces */
     .product-card {{
         background-color: {"#1e293b" if st.session_state.theme in ["Sombre", "داكن"] else "#ffffff"};
         border: 1px solid {"#334155" if st.session_state.theme in ["Sombre", "داكن"] else "#e2e8f0"};
@@ -335,13 +243,12 @@ css_dynamique = f"""
 """
 st.markdown(css_dynamique, unsafe_allow_html=True)
 
-# --- 6. BARRE LATÉRALE DE CONFIGURATION ---
+# --- 6. BARRE LATÉRALE ---
 with st.sidebar:
     st.title(T["titre_principal"])
     st.caption(T["sous_titre"])
     st.markdown("---")
     
-    # Sélecteur de Langue
     langue_choisie = st.selectbox("🌐 Langue / Language / اللغة", list(TRADUCTIONS.keys()), index=list(TRADUCTIONS.keys()).index(st.session_state.langue))
     if langue_choisie != st.session_state.langue:
         st.session_state.langue = langue_choisie
@@ -350,16 +257,14 @@ with st.sidebar:
     st.markdown("---")
     st.subheader(T["mode_affichage"])
     
-    # Choix du Thème
     theme_idx = 0 if st.session_state.theme in ["Sombre", "داكن"] else 1
     theme_choisi = st.radio(T["choisir_theme"], T["options_theme"], index=theme_idx)
     
-    val_theme = "Sombre" if theme_choisi in ["Sombre", "大根", "Dark", "Oscuro"] else "Clair"
+    val_theme = "Sombre" if theme_choisi in ["Sombre", "داكن"] else "Clair"
     if val_theme != st.session_state.theme:
         st.session_state.theme = val_theme
         st.rerun()
 
-    # Infos de session
     if st.session_state.user_connecte:
         st.markdown("---")
         st.markdown(f"### {T['espace_de']} **{st.session_state.user_connecte}**")
@@ -371,50 +276,9 @@ with st.sidebar:
             st.session_state.page = "login"
             st.rerun()
 
-# --- 7. FONCTION ENVOI SMTP POUR CODE OTP VÉRITABLE ---
-def envoyer_email_otp(destinataire, code):
-    editeur_email = "damerdjidjawed@gmail.com" 
-    editeur_mot_de_passe = "qtlt epgu fkry tmtn" 
-    
-    msg = MIMEMultipart()
-    msg['From'] = f"Souk DZ Sécurité <{editeur_email}>"
-    msg['To'] = destinataire
-    msg['Subject'] = f"Code de validation d'inscription Souk DZ - {code}"
-    
-    corps_message = f"""
-    <html>
-        <body style="font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px;">
-            <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-                <h2 style="color: #ff4b4b; text-align: center;">⚡ Bienvenue sur Souk DZ ⚡</h2>
-                <p>Bonjour,</p>
-                <p>Pour finaliser la création de votre compte sécurisé, veuillez entrer le code de validation à 6 chiffres suivant sur notre application :</p>
-                <div style="text-align: center; margin: 30px 0; padding: 15px; background: #f8fafc; border: 2px dashed #ff4b4b; font-size: 28px; font-weight: bold; letter-spacing: 5px; color: #0f172a;">
-                    {code}
-                </div>
-                <p style="font-size: 12px; color: #64748b; text-align: center;">Ce code est confidentiel. Ne le partagez jamais. Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail.</p>
-            </div>
-        </body>
-    </html>
-    """
-    msg.attach(MIMEText(corps_message, 'html'))
-    
-    try:
-        serveur = smtplib.SMTP('smtp.gmail.com', 587)
-        serveur.starttls()
-        serveur.login(editeur_email, editeur_mot_de_passe)
-        serveur.sendmail(editeur_email, destinataire, msg.as_string())
-        serveur.quit()
-        return True
-    except Exception as e:
-        print(f"Erreur SMTP rencontrée : {e}")
-        return False
-
-# --- 8. SYSTÈME DE ROUTAGE DES PAGES ---
-
 # --- PAGE DE CONNEXION ---
 if st.session_state.page == "login":
     st.title(T["connexion_titre"])
-    
     col_l1, col_l2 = st.columns(2)
     with col_l1:
         log_email = st.text_input(T["email_label"], placeholder=T["email_placeholder"])
@@ -427,13 +291,11 @@ if st.session_state.page == "login":
                 st.rerun()
             else:
                 st.error(T["erreur_identifiants"])
-                
     with col_l2:
         st.write("###")
         if st.button(T["btn_creer_compte"], use_container_width=True):
             st.session_state.page = "inscription"
             st.rerun()
-            
     st.markdown("---")
     if st.button(T["retour_vitrine"], use_container_width=True):
         st.session_state.page = "vitrine"
@@ -442,29 +304,33 @@ if st.session_state.page == "login":
 # --- PAGE D'INSCRIPTION ---
 elif st.session_state.page == "inscription":
     st.title(T["inscription_titre"])
-    
     ins_pseudo = st.text_input(T["pseudo_label"], placeholder=T["pseudo_placeholder"])
     ins_email = st.text_input(T["email_label"], placeholder=T["email_placeholder"])
     ins_mdp = st.text_input(T["mdp_label"], type="password", placeholder=T["mdp_placeholder"])
     
     col_tel1, col_tel2 = st.columns([1, 3])
     with col_tel1:
-        prefixe_pays = st.selectbox("Code", LISTE_PAYS_INDICATIFS)
+        prefixe_pays = st.selectbox("Code", LISTE_PAYS_INDICATIFS, key="ins_prefixe")
     with col_tel2:
         num_tel_brut = st.text_input(T["tel_label"], placeholder="5XXXXXXXX / 6XXXXXXXX")
         
     if st.button(T["btn_otp"], use_container_width=True):
         if ins_email and ins_pseudo and ins_mdp and num_tel_brut:
-            st.session_state.otp_valide = str(random.randint(100000, 999999))
-            envoi_reussi = envoyer_email_otp(ins_email, st.session_state.otp_valide)
+            code_genere = str(random.randint(100000, 999999))
+            st.session_state.otp_valide = code_genere
             st.session_state.otp_envoye = True
-            st.info(f"💡 [DEBUG/PROD] Un code a été généré pour votre adresse email. (Vérifiez vos spams)")
+            
+            # Appel de la fonction d'envoi
+            succes = envoyer_email_otp(ins_email, code_genere)
+            if succes:
+                st.success("✉️ Code de vérification envoyé sur votre email !")
+            else:
+                st.warning(f"💡 Mode démo/secours : Code généré -> {code_genere}")
         else:
             st.error(T["erreur_champs"])
             
     if st.session_state.otp_envoye:
         code_saisi = st.text_input(T["code_6_label"], max_chars=6)
-        
         if st.button(T["btn_valider_inscription"], type="primary", use_container_width=True):
             if code_saisi == st.session_state.otp_valide:
                 numero_final = f"{prefixe_pays} {num_tel_brut.strip()}"
@@ -474,13 +340,11 @@ elif st.session_state.page == "inscription":
                     "telephone": numero_final
                 }
                 sauvegarder_donnees(DB_USERS, st.session_state.users)
-                st.success("🎉 Compte validé et créé avec succès !")
                 st.session_state.user_connecte = ins_pseudo
                 st.session_state.page = "vitrine"
                 st.rerun()
             else:
                 st.error("❌ Code OTP invalide.")
-                
     st.markdown("---")
     if st.button(T["btn_retour_login"], use_container_width=True):
         st.session_state.page = "login"
@@ -496,28 +360,52 @@ elif st.session_state.page == "ajouter_annonce":
     
     item_nom = st.text_input(T["nom_article"])
     item_ville = st.text_input(T["ville_label"])
-    item_prix = st.number_input(T["prix_label"], min_value=0, step=50, value=0)
+    item_prix = st.number_input(T["prix_label"], min_value=0, value=0)
     item_desc = st.text_area(T["desc_label"])
-    item_img = st.file_uploader(T["image_label"], type=["png", "jpg", "jpeg"])
     
-    tel_vendeur = ""
+    tel_profil = ""
     for u_em, u_data in st.session_state.users.items():
         if u_data["pseudo"] == st.session_state.user_connecte:
-            tel_vendeur = u_data["telephone"]
+            tel_profil = u_data["telephone"]
             break
-            
+
+    idx_prefixe_defaut = 0
+    num_brut_defaut = ""
+    if tel_profil:
+        parts = tel_profil.split(" ", 1)
+        if len(parts) == 2:
+            prefixe_trouve = parts[0]
+            num_brut_defaut = parts[1]
+            for idx, p in enumerate(LISTE_PAYS_INDICATIFS):
+                if prefixe_trouve in p:
+                    idx_prefixe_defaut = idx
+                    break
+
+    st.markdown("---")
+    st.markdown("#### 📞 Numéro de contact pour cette annonce")
+    col_v1, col_v2 = st.columns([1, 3])
+    with col_v1:
+        ann_prefixe = st.selectbox("Indicatif", LISTE_PAYS_INDICATIFS, index=idx_prefixe_defaut, key="ann_prefixe")
+    with col_v2:
+        ann_num_brut = st.text_input(T["tel_label"], value=num_brut_defaut, key="ann_num_brut")
+    st.markdown("---")
+
+    item_img = st.file_uploader(T["image_label"], type=["png", "jpg", "jpeg"])
+    
     col_act1, col_act2 = st.columns(2)
     with col_act1:
         if st.button(T["btn_publier"], type="primary", use_container_width=True):
-            if item_nom and item_ville and item_prix > 0 and item_desc:
+            if item_nom and item_ville and item_prix > 0 and item_desc and ann_num_brut:
                 code_sec_genere = str(random.randint(1000, 9999))
+                numero_final_annonce = f"{ann_prefixe} {ann_num_brut.strip()}"
+                
                 nouvelle_ad = {
                     "vendeur": st.session_state.user_connecte,
                     "titre": item_nom,
                     "ville": item_ville,
                     "prix": item_prix,
                     "description": item_desc,
-                    "telephone": tel_vendeur,
+                    "telephone": numero_final_annonce,
                     "code_secret": code_sec_genere,
                     "image_path": None
                 }
@@ -534,7 +422,7 @@ elif st.session_state.page == "ajouter_annonce":
             st.session_state.page = "vitrine"
             st.rerun()
 
-# --- PAGE COMPLÈTE DE L'INTERFACE DÉTAILS DE L'ANNONCE ---
+# --- PAGE DÉTAILS DE L'ANNONCE ---
 elif st.session_state.page == "details_annonce":
     idx = st.session_state.selected_ad_index
     if idx is None or idx >= len(st.session_state.ads):
@@ -542,15 +430,12 @@ elif st.session_state.page == "details_annonce":
         st.rerun()
         
     ad = st.session_state.ads[idx]
-    
     if st.button(T["retour_vitrine"], type="secondary"):
         st.session_state.page = "vitrine"
         st.rerun()
         
     st.markdown("---")
-    
     col_d1, col_d2 = st.columns([1, 1])
-    
     with col_d1:
         st.title(ad["titre"])
         st.subheader(f"💰 {ad['prix']} DA")
@@ -560,10 +445,9 @@ elif st.session_state.page == "details_annonce":
         st.write("---")
         st.write(T["desc_produit"])
         st.info(ad["description"])
-        
         st.write("---")
-        code_verif_input = st.text_input(T["code_secret_annonce"], type="password", key=f"code_sec_{idx}")
         
+        code_verif_input = st.text_input(T["code_secret_annonce"], type="password", key=f"code_sec_{idx}")
         col_btn_mod, col_btn_sup = st.columns(2)
         with col_btn_mod:
             if st.button(T["btn_modifier"], use_container_width=True):
@@ -583,7 +467,7 @@ elif st.session_state.page == "details_annonce":
     with col_d2:
         st.subheader(T["assistant_titre"])
         st.file_uploader(T["photo_ia"], type=["png", "jpg", "jpeg"])
-        st.text_area(T["chat_placeholder"], height=150, placeholder="L'IA peut analyser l'annonce actuelle ici...")
+        st.text_area(T["chat_placeholder"], height=150)
 
 # --- PAGE MODIFIER ANNONCE ---
 elif st.session_state.page == "modifier_annonce":
@@ -591,10 +475,9 @@ elif st.session_state.page == "modifier_annonce":
     ad = st.session_state.ads[idx]
     
     st.title(f"📝 Modifier : {ad['titre']}")
-    
     mod_titre = st.text_input(T["nom_article"], value=ad["titre"])
     mod_ville = st.text_input(T["ville_label"], value=ad["ville"])
-    mod_prix = st.number_input(T["prix_label"], min_value=0, step=50, value=int(ad["prix"]))
+    mod_prix = st.number_input(T["prix_label"], min_value=0, value=int(ad["prix"]))
     mod_desc = st.text_area(T["desc_label"], value=ad["description"])
     
     if st.button(T["btn_publier"], type="primary"):
@@ -610,11 +493,8 @@ elif st.session_state.page == "modifier_annonce":
 # --- PAGE SUPPRIMER ANNONCE ---
 elif st.session_state.page == "supprimer_annonce":
     idx = st.session_state.selected_ad_index
-    ad = st.session_state.ads[idx]
-    
     st.title(T["btn_supprimer"])
     st.warning(T["warning_suppr"])
-    
     if st.button(T["btn_confirmer_suppr"], type="primary", use_container_width=True):
         st.session_state.ads.pop(idx)
         sauvegarder_donnees(DB_ADS, st.session_state.ads)
@@ -622,11 +502,10 @@ elif st.session_state.page == "supprimer_annonce":
         st.session_state.page = "vitrine"
         st.rerun()
 
-# --- PAGE PRINCIPALE : VITRINE DES PRODUITS (PAR DÉFAUT) ---
+# --- PAGE PRINCIPALE : VITRINE DES PRODUITS ---
 else:
     st.title(T["titre_principal"])
     st.subheader(T["sous_titre"])
-    
     barre_recherche = st.text_input("", placeholder=T["rechercher_placeholder"])
     
     if not st.session_state.user_connecte:
@@ -643,7 +522,7 @@ else:
             annonces_filtrees.append((i, ad))
             
     if not annonces_filtrees:
-        st.info("💡 Aucun produit n'est actuellement disponible ou ne correspond à votre recherche.")
+        st.info("💡 Aucun produit disponible.")
     else:
         colonnes_vitrine = st.columns(3)
         for rang, (index_reel, article) in enumerate(annonces_filtrees):
