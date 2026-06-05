@@ -102,7 +102,7 @@ TRADUCTIONS = {
         "desc_label": "الوصف *",
         "btn_publier": "نشر في السوق",
         "btn_annuler": "إلغاء",
-        "articles_dispo": "📚 السلع المتاحة",
+        "articles_dispo": "📚 السلع Mتاحة",
         "rechercher_placeholder": "🔍 ابحث في السوق...",
         "btn_details": "👁️ عرض التفاصيل",
         "assistant_titre": "🤖 مساعد Souk DZ الذكي",
@@ -148,8 +148,17 @@ def charger_donnees(fichier, par_defaut):
     return par_defaut
 
 def sauvegarder_donnees(fichier, donnees):
+    # Pour le JSON, on ne peut pas sauvegarder directement des octets (bytes) d'image.
+    # On nettoie temporairement les données d'image pour éviter une erreur d'écriture JSON.
+    donnees_propres = []
+    for ad in donnees:
+        ad_copie = ad.copy()
+        if "image_bytes" in ad_copie:
+            ad_copie.pop("image_bytes")  # On gère l'image en mémoire session_state pour la démo
+        donnees_propres.append(ad_copie)
+        
     with open(fichier, "w", encoding="utf-8") as f:
-        json.dump(donnees, f, ensure_ascii=False, indent=4)
+        json.dump(donnees_propres, f, ensure_ascii=False, indent=4)
 
 if "users" not in st.session_state:
     st.session_state.users = charger_donnees(DB_USERS, {})
@@ -320,7 +329,6 @@ elif st.session_state.page == "inscription":
             st.session_state.otp_valide = code_genere
             st.session_state.otp_envoye = True
             
-            # Appel de la fonction d'envoi
             succes = envoyer_email_otp(ins_email, code_genere)
             if succes:
                 st.success("✉️ Code de vérification envoyé sur votre email !")
@@ -350,7 +358,7 @@ elif st.session_state.page == "inscription":
         st.session_state.page = "login"
         st.rerun()
 
-# --- PAGE AJOUTER UNE ANNONCE ---
+# --- PAGE AJOUTER UNE ANNONCE (AVEC STR.DIALOG BLOQUANT) ---
 elif st.session_state.page == "ajouter_annonce":
     if not st.session_state.user_connecte:
         st.session_state.page = "login"
@@ -392,12 +400,26 @@ elif st.session_state.page == "ajouter_annonce":
 
     item_img = st.file_uploader(T["image_label"], type=["png", "jpg", "jpeg"])
     
+    # Boîte de dialogue surgissante pour le code secret
+    @st.dialog("🎉 Annonce Publiée !")
+    def afficher_boite_code_secret(code):
+        st.write("### 🔑 Notez bien votre code secret de modification :")
+        st.info(f"## **{code}**")
+        st.write("Ce code vous sera demandé si vous souhaitez modifier ou supprimer votre annonce.")
+        if st.button("Compris, aller à la vitrine", type="primary", use_container_width=True):
+            st.session_state.page = "vitrine"
+            st.rerun()
+
     col_act1, col_act2 = st.columns(2)
     with col_act1:
         if st.button(T["btn_publier"], type="primary", use_container_width=True):
             if item_nom and item_ville and item_prix > 0 and item_desc and ann_num_brut:
                 code_sec_genere = str(random.randint(1000, 9999))
                 numero_final_annonce = f"{ann_prefixe} {ann_num_brut.strip()}"
+                
+                img_data = None
+                if item_img is not None:
+                    img_data = item_img.read()
                 
                 nouvelle_ad = {
                     "vendeur": st.session_state.user_connecte,
@@ -407,13 +429,13 @@ elif st.session_state.page == "ajouter_annonce":
                     "description": item_desc,
                     "telephone": numero_final_annonce,
                     "code_secret": code_sec_genere,
-                    "image_path": None
+                    "image_bytes": img_data
                 }
                 st.session_state.ads.append(nouvelle_ad)
                 sauvegarder_donnees(DB_ADS, st.session_state.ads)
-                st.success(f"✨ Annonce publiée ! CODE SECRET DE MODIFICATION : {code_sec_genere}")
-                st.session_state.page = "vitrine"
-                st.rerun()
+                
+                # Lance le pop-up bloquant
+                afficher_boite_code_secret(code_sec_genere)
             else:
                 st.error(T["erreur_champs"])
                 
@@ -422,7 +444,7 @@ elif st.session_state.page == "ajouter_annonce":
             st.session_state.page = "vitrine"
             st.rerun()
 
-# --- PAGE DÉTAILS DE L'ANNONCE ---
+# --- PAGE DÉTAILS DE L'ANNONCE (AVEC VRAI AFFICHAGE DE LA PHOTO) ---
 elif st.session_state.page == "details_annonce":
     idx = st.session_state.selected_ad_index
     if idx is None or idx >= len(st.session_state.ads):
@@ -435,6 +457,12 @@ elif st.session_state.page == "details_annonce":
         st.rerun()
         
     st.markdown("---")
+    
+    # 📸 Affichage de la photo originale du produit en haut
+    if "image_bytes" in ad and ad["image_bytes"] is not None:
+        st.image(ad["image_bytes"], caption=ad["titre"], width=550)
+        st.markdown("---")
+        
     col_d1, col_d2 = st.columns([1, 1])
     with col_d1:
         st.title(ad["titre"])
