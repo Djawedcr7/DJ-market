@@ -7,7 +7,6 @@ import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from PIL import Image
-from streamlit_cookies_controller import CookieController
 
 # --- 1. CONFIGURATION DE LA PAGE ---
 st.set_page_config(
@@ -15,8 +14,6 @@ st.set_page_config(
     page_icon="⚡",
     layout="wide"
 )
-
-cookies = CookieController()
 
 # --- 2. DICTIONNAIRE DE TRADUCTION COMPLET ---
 TRADUCTIONS = {
@@ -201,7 +198,7 @@ TRADUCTIONS = {
         "inscription_titre": "📝 Crear una Cuenta",
         "pseudo_label": "Elija un Nombre de Usuario",
         "pseudo_placeholder": "Ej: Bob123",
-        "tel_label": "Número de téléphone *",
+        "tel_label": "Número de teléfono *",
         "btn_otp": "Solicitar código de verificación ✉️",
         "code_6_label": "Introduce los 6 dígitos",
         "btn_valider_inscription": "Confirmar Registro 🎉",
@@ -236,7 +233,7 @@ TRADUCTIONS = {
         "erreur_champs": "❌ Por favor, rellene todos los campos.",
         "erreur_identifiants": "❌ Credenciales incorrectas.",
         "succes_modif": "✨ ¡Modificaciones guardadas correctamente!",
-        "warning_suppr": "⚠️ Advertencia: esta acción eliminará permanentemente el artículo.",
+        "warning_suppr": "⚠️ Advertencia: esta action eliminará permanentemente el artículo.",
         "btn_confirmer_suppr": "💥 Confirmar Eliminación Permanente",
         "succes_suppr": "Anuncio eliminado con éxito."
     }
@@ -277,10 +274,8 @@ if "ads" not in st.session_state:
 if "langue" not in st.session_state:
     st.session_state.langue = "Français"
 
-# Chargement initial du thème via cookies ou session
-cookie_theme = cookies.get("theme_souk")
 if "theme" not in st.session_state:
-    st.session_state.theme = cookie_theme if cookie_theme else "Sombre"
+    st.session_state.theme = "Sombre"
 
 # Navigation
 if "page" not in st.session_state:
@@ -338,7 +333,6 @@ css_dynamique = f"""
     }}
 </style>
 """
-# Remplacement de unsafe_transform par unsafe_allow_html pour régler le bug
 st.markdown(css_dynamique, unsafe_allow_html=True)
 
 # --- 6. BARRE LATÉRALE DE CONFIGURATION ---
@@ -363,7 +357,6 @@ with st.sidebar:
     val_theme = "Sombre" if theme_choisi in ["Sombre", "大根", "Dark", "Oscuro"] else "Clair"
     if val_theme != st.session_state.theme:
         st.session_state.theme = val_theme
-        cookies.set("theme_souk", val_theme)
         st.rerun()
 
     # Infos de session
@@ -380,7 +373,6 @@ with st.sidebar:
 
 # --- 7. FONCTION ENVOI SMTP POUR CODE OTP VÉRITABLE ---
 def envoyer_email_otp(destinataire, code):
-    # Configuration de tes identifiants d'envoi réels
     editeur_email = "damerdjidjawed@gmail.com" 
     editeur_mot_de_passe = "qtlt epgu fkry tmtn" 
     
@@ -461,7 +453,6 @@ elif st.session_state.page == "inscription":
     with col_tel2:
         num_tel_brut = st.text_input(T["tel_label"], placeholder="5XXXXXXXX / 6XXXXXXXX")
         
-    # Bloc d'envoi du code de vérification Email (SMTP)
     if st.button(T["btn_otp"], use_container_width=True):
         if ins_email and ins_pseudo and ins_mdp and num_tel_brut:
             st.session_state.otp_valide = str(random.randint(100000, 999999))
@@ -665,7 +656,7 @@ else:
                     <p>📍 {article['ville']}</p>
                     <p style="font-size: 13px; color: #64748b;">👤 Vendeur : {article['vendeur']}</p>
                 </div>
-                """, unsafe_allow_html=True) # Changement ici aussi pour la sécurité
+                """, unsafe_allow_html=True)
                 if st.button(f"{T['btn_details']} - {article['titre']}", key=f"btn_vit_{index_reel}", use_container_width=True):
                     st.session_state.selected_ad_index = index_reel
                     st.session_state.page = "details_annonce"
