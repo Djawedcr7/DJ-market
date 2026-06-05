@@ -152,7 +152,7 @@ def sauvegarder_donnees(fichier, donnees):
     for ad in donnees:
         ad_copie = ad.copy()
         if "image_bytes" in ad_copie:
-            ad_copie.pop("image_bytes")  # On garde l'image en mémoire session_state pour la démo
+            ad_copie.pop("image_bytes")
         donnees_propres.append(ad_copie)
         
     with open(fichier, "w", encoding="utf-8") as f:
@@ -165,8 +165,8 @@ if "ads" not in st.session_state:
 
 # --- 4. FONCTION D'ENVOI EMAIL OTP ---
 def envoyer_email_otp(destinataire, code):
-    editeur_email = "damerdjidjawed@gmail.com"  # 👈 LIGNE 145 : METS TON EMAIL ICI
-    editeur_mot_de_passe = "qtlt epgu fkry tmtn"  # 👈 LIGNE 146 : METS TON CODE DE 16 LETTRES ICI
+    editeur_email = "damerdjidjawed@gmail.com"
+    editeur_mot_de_passe = "qtlt epgu fkry tmtn"
     
     msg = MIMEMultipart()
     msg['From'] = editeur_email
@@ -305,7 +305,7 @@ if st.session_state.page == "login":
             st.rerun()
             
     st.markdown("---")
-    if st.button(T["btn_annuler"], use_container_width=True):
+    if st.button(T["btn_annuler"], key="annuler_login", use_container_width=True):
         st.session_state.page = "vitrine"
         st.rerun()
 
@@ -352,10 +352,17 @@ elif st.session_state.page == "inscription":
                 st.rerun()
             else:
                 st.error("❌ Code OTP invalide.")
+                
     st.markdown("---")
-    if st.button(T["btn_retour_login"], use_container_width=True):
-        st.session_state.page = "login"
-        st.rerun()
+    col_ins_back1, col_ins_back2 = st.columns(2)
+    with col_ins_back1:
+        if st.button(T["btn_retour_login"], use_container_width=True):
+            st.session_state.page = "login"
+            st.rerun()
+    with col_ins_back2:
+        if st.button(T["btn_annuler"], key="annuler_inscription", use_container_width=True):
+            st.session_state.page = "vitrine"
+            st.rerun()
 
 # --- PAGE AJOUTER UNE ANNONCE ---
 elif st.session_state.page == "ajouter_annonce":
@@ -437,7 +444,7 @@ elif st.session_state.page == "ajouter_annonce":
                 st.error(T["erreur_champs"])
                 
     with col_act2:
-        if st.button(T["btn_annuler"], use_container_width=True):
+        if st.button(T["btn_annuler"], key="annuler_creation_annonce", use_container_width=True):
             st.session_state.page = "vitrine"
             st.rerun()
 
@@ -504,15 +511,21 @@ elif st.session_state.page == "modifier_annonce":
     mod_prix = st.number_input(T["prix_label"], min_value=0, value=int(ad["prix"]))
     mod_desc = st.text_area(T["desc_label"], value=ad["description"])
     
-    if st.button(T["btn_publier"], type="primary"):
-        st.session_state.ads[idx]["titre"] = mod_titre
-        st.session_state.ads[idx]["ville"] = mod_ville
-        st.session_state.ads[idx]["prix"] = mod_prix
-        st.session_state.ads[idx]["description"] = mod_desc
-        sauvegarder_donnees(DB_ADS, st.session_state.ads)
-        st.success(T["succes_modif"])
-        st.session_state.page = "details_annonce"
-        st.rerun()
+    col_mod_actions1, col_mod_actions2 = st.columns(2)
+    with col_mod_actions1:
+        if st.button(T["btn_publier"], type="primary", use_container_width=True):
+            st.session_state.ads[idx]["titre"] = mod_titre
+            st.session_state.ads[idx]["ville"] = mod_ville
+            st.session_state.ads[idx]["prix"] = mod_prix
+            st.session_state.ads[idx]["description"] = mod_desc
+            sauvegarder_donnees(DB_ADS, st.session_state.ads)
+            st.success(T["succes_modif"])
+            st.session_state.page = "details_annonce"
+            st.rerun()
+    with col_mod_actions2:
+        if st.button(T["btn_annuler"], key="annuler_modification_annonce", use_container_width=True):
+            st.session_state.page = "details_annonce"
+            st.rerun()
 
 # --- PAGE SUPPRIMER ANNONCE ---
 elif st.session_state.page == "supprimer_annonce":
