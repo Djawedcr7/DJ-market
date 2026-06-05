@@ -102,7 +102,7 @@ TRADUCTIONS = {
         "desc_label": "الوصف *",
         "btn_publier": "نشر في السوق",
         "btn_annuler": "إلغاء",
-        "articles_dispo": "📚 السلع Mتاحة",
+        "articles_dispo": "📚 السلع المتاحة",
         "rechercher_placeholder": "🔍 ابحث في السوق...",
         "btn_details": "👁️ عرض التفاصيل",
         "assistant_titre": "🤖 مساعد Souk DZ الذكي",
@@ -148,13 +148,11 @@ def charger_donnees(fichier, par_defaut):
     return par_defaut
 
 def sauvegarder_donnees(fichier, donnees):
-    # Pour le JSON, on ne peut pas sauvegarder directement des octets (bytes) d'image.
-    # On nettoie temporairement les données d'image pour éviter une erreur d'écriture JSON.
     donnees_propres = []
     for ad in donnees:
         ad_copie = ad.copy()
         if "image_bytes" in ad_copie:
-            ad_copie.pop("image_bytes")  # On gère l'image en mémoire session_state pour la démo
+            ad_copie.pop("image_bytes")  # On garde l'image en mémoire session_state pour la démo
         donnees_propres.append(ad_copie)
         
     with open(fichier, "w", encoding="utf-8") as f:
@@ -305,8 +303,9 @@ if st.session_state.page == "login":
         if st.button(T["btn_creer_compte"], use_container_width=True):
             st.session_state.page = "inscription"
             st.rerun()
+            
     st.markdown("---")
-    if st.button(T["retour_vitrine"], use_container_width=True):
+    if st.button(T["btn_annuler"], use_container_width=True):
         st.session_state.page = "vitrine"
         st.rerun()
 
@@ -358,7 +357,7 @@ elif st.session_state.page == "inscription":
         st.session_state.page = "login"
         st.rerun()
 
-# --- PAGE AJOUTER UNE ANNONCE (AVEC STR.DIALOG BLOQUANT) ---
+# --- PAGE AJOUTER UNE ANNONCE ---
 elif st.session_state.page == "ajouter_annonce":
     if not st.session_state.user_connecte:
         st.session_state.page = "login"
@@ -400,7 +399,6 @@ elif st.session_state.page == "ajouter_annonce":
 
     item_img = st.file_uploader(T["image_label"], type=["png", "jpg", "jpeg"])
     
-    # Boîte de dialogue surgissante pour le code secret
     @st.dialog("🎉 Annonce Publiée !")
     def afficher_boite_code_secret(code):
         st.write("### 🔑 Notez bien votre code secret de modification :")
@@ -434,7 +432,6 @@ elif st.session_state.page == "ajouter_annonce":
                 st.session_state.ads.append(nouvelle_ad)
                 sauvegarder_donnees(DB_ADS, st.session_state.ads)
                 
-                # Lance le pop-up bloquant
                 afficher_boite_code_secret(code_sec_genere)
             else:
                 st.error(T["erreur_champs"])
@@ -444,7 +441,7 @@ elif st.session_state.page == "ajouter_annonce":
             st.session_state.page = "vitrine"
             st.rerun()
 
-# --- PAGE DÉTAILS DE L'ANNONCE (AVEC VRAI AFFICHAGE DE LA PHOTO) ---
+# --- PAGE DÉTAILS DE L'ANNONCE ---
 elif st.session_state.page == "details_annonce":
     idx = st.session_state.selected_ad_index
     if idx is None or idx >= len(st.session_state.ads):
@@ -458,7 +455,6 @@ elif st.session_state.page == "details_annonce":
         
     st.markdown("---")
     
-    # 📸 Affichage de la photo originale du produit en haut
     if "image_bytes" in ad and ad["image_bytes"] is not None:
         st.image(ad["image_bytes"], caption=ad["titre"], width=550)
         st.markdown("---")
@@ -556,14 +552,18 @@ else:
         for rang, (index_reel, article) in enumerate(annonces_filtrees):
             cible_col = colonnes_vitrine[rang % 3]
             with cible_col:
+                if "image_bytes" in article and article["image_bytes"] is not None:
+                    st.image(article["image_bytes"], use_container_width=True)
+                    
                 st.markdown(f"""
-                <div class="product-card">
+                <div class="product-card" style="margin-top: -10px;">
                     <h3>{article['titre']}</h3>
                     <h4 style="color: #ff4b4b;">{article['prix']} DA</h4>
                     <p>📍 {article['ville']}</p>
                     <p style="font-size: 13px; color: #64748b;">👤 Vendeur : {article['vendeur']}</p>
                 </div>
                 """, unsafe_allow_html=True)
+                
                 if st.button(f"{T['btn_details']} - {article['titre']}", key=f"btn_vit_{index_reel}", use_container_width=True):
                     st.session_state.selected_ad_index = index_reel
                     st.session_state.page = "details_annonce"
