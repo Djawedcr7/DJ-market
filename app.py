@@ -60,7 +60,7 @@ TRADUCTIONS = {
         "desc_produit": "📝 Description du produit :",
         "btn_modifier": "📝 Modifier cette annonce",
         "btn_supprimer": "❌ Supprimer cette annonce",
-        "code_secret_annonce": "Entrez le code secret (ou Code Master)",
+        "code_secret_annonce": "Entrez le code secret de l'annonce",
         "btn_verif_code": "Vérifier le code",
         "erreur_code": "❌ Code secret incorrect.",
         "erreur_champs": "❌ Veuillez remplir tous les champs.",
@@ -71,7 +71,7 @@ TRADUCTIONS = {
         "succes_suppr": "Annonce supprimée avec succès."
     },
     "العربية": {
-        "titre_principal": "⚡ سوق دز (Souk DZ)",
+        "titre_principal": "⚡ سوق دزاير(Souk DZ)",
         "sous_titre": "منصة آمنة للمستعمل مع حفظ دائم للبيانات",
         "mode_affichage": "🎨 وضع العرض",
         "choisir_theme": "اختر المظهر:",
@@ -115,7 +115,7 @@ TRADUCTIONS = {
         "desc_produit": "📝 وصف المنتج:",
         "btn_modifier": "📝 تعديل هذا الإعلان",
         "btn_supprimer": "❌ حذف هذا الإعلان",
-        "code_secret_annonce": "أدخل الرمز السري (أو الرمز الرئيسي)",
+        "code_secret_annonce": "أدخل الرمز السري للإعلان",
         "btn_verif_code": "التحقق من الرمز",
         "erreur_code": "❌ الرمز السري غير صحيح.",
         "erreur_champs": "❌ يرجى ملء جميع الحقول.",
@@ -126,9 +126,6 @@ TRADUCTIONS = {
         "succes_suppr": "تم حذف الإعلان بنجاح."
     }
 }
-
-# 🔑 CODE MASTER ADMINISTRATEUR POUR LES TESTS
-CODE_MASTER = "0000"
 
 LISTE_PAYS_INDICATIFS = [
     "🇩🇿 +213", "🇲🇦 +212", "🇹🇳 +216", "🇪🇬 +20", "🇱🇾 +218", "🇲🇷 +222",
@@ -485,16 +482,14 @@ elif st.session_state.page == "details_annonce":
         col_btn_mod, col_btn_sup = st.columns(2)
         with col_btn_mod:
             if st.button(T["btn_modifier"], use_container_width=True):
-                # 🛠️ CORRECTION : On autorise le code de l'annonce OU le Code Master "0000"
-                if code_verif_input == ad["code_secret"] or code_verif_input == CODE_MASTER:
+                if code_verif_input == ad["code_secret"]:
                     st.session_state.page = "modifier_annonce"
                     st.rerun()
                 else:
                     st.error(T["erreur_code"])
         with col_btn_sup:
             if st.button(T["btn_supprimer"], use_container_width=True):
-                # 🛠️ CORRECTION : On autorise le code de l'annonce OU le Code Master "0000"
-                if code_verif_input == ad["code_secret"] or code_verif_input == CODE_MASTER:
+                if code_verif_input == ad["code_secret"]:
                     st.session_state.page = "supprimer_annonce"
                     st.rerun()
                 else:
