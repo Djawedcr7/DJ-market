@@ -201,7 +201,7 @@ TRADUCTIONS = {
         "inscription_titre": "📝 Crear una Cuenta",
         "pseudo_label": "Elija un Nombre de Usuario",
         "pseudo_placeholder": "Ej: Bob123",
-        "tel_label": "Número de teléfono *",
+        "tel_label": "Número de téléphone *",
         "btn_otp": "Solicitar código de verificación ✉️",
         "code_6_label": "Introduce los 6 dígitos",
         "btn_valider_inscription": "Confirmar Registro 🎉",
@@ -247,7 +247,7 @@ LISTE_PAYS_INDICATIFS = [
     "🇸🇦 +966", "🇦🇪 +971", "🇶🇦 +974", "🇰🇼 +965", "🇴🇲 +968", "🇧🇭 +973",
     "🇯🇴 +962", "🇱🇧 +961", "🇵🇸 +970", "🇸🇾 +963", "🇮🇶 +964", "🇾🇪 +967",
     "🇫🇷 +33", "🇧🇪 +32", "🇨🇭 +41", "🇨🇦 +1", "🇺🇸 +1", "🇬🇧 +44",
-    "🇩🇪 +49", "🇪慢 +34", "🇮🇹 +39", "🇵🇹 +351", "🇳🇱 +31", "🇹🇷 +90"
+    "🇩🇪 +49", "🇪🇸 +34", "🇮🇹 +39", "🇵🇹 +351", "🇳🇱 +31", "🇹🇷 +90"
 ]
 
 # --- 3. PERSISTANCE DES DONNÉES EN JSON LOCAL ---
@@ -284,7 +284,7 @@ if "theme" not in st.session_state:
 
 # Navigation
 if "page" not in st.session_state:
-    st.session_state.page = "login"
+    st.session_state.page = "vitrine"
 if "user_connecte" not in st.session_state:
     st.session_state.user_connecte = None
 if "selected_ad_index" not in st.session_state:
@@ -338,7 +338,8 @@ css_dynamique = f"""
     }}
 </style>
 """
-st.markdown(css_dynamique, unsafe_transform=True)
+# Remplacement de unsafe_transform par unsafe_allow_html pour régler le bug
+st.markdown(css_dynamique, unsafe_allow_html=True)
 
 # --- 6. BARRE LATÉRALE DE CONFIGURATION ---
 with st.sidebar:
@@ -380,7 +381,7 @@ with st.sidebar:
 # --- 7. FONCTION ENVOI SMTP POUR CODE OTP VÉRITABLE ---
 def envoyer_email_otp(destinataire, code):
     # Configuration de tes identifiants d'envoi réels
-    editeur_email = "damerdjidjwed@gmail.com" 
+    editeur_email = "damerdjidjawed@gmail.com" 
     editeur_mot_de_passe = "qtlt epgu fkry tmtn" 
     
     msg = MIMEMultipart()
@@ -664,7 +665,7 @@ else:
                     <p>📍 {article['ville']}</p>
                     <p style="font-size: 13px; color: #64748b;">👤 Vendeur : {article['vendeur']}</p>
                 </div>
-                """, unsafe_transform=True)
+                """, unsafe_allow_html=True) # Changement ici aussi pour la sécurité
                 if st.button(f"{T['btn_details']} - {article['titre']}", key=f"btn_vit_{index_reel}", use_container_width=True):
                     st.session_state.selected_ad_index = index_reel
                     st.session_state.page = "details_annonce"
