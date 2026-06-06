@@ -150,15 +150,12 @@ def charger_donnees(fichier, par_defaut):
             return par_defaut
     return par_defaut
 
-# CORRECTION SÉCURISÉE DE LA SAUVEGARDE JSON (Évite l'AttributeError)
 def sauvegarder_donnees(fichier, donnees):
     try:
         if isinstance(donnees, dict):
-            # Sauvegarde directe pour les utilisateurs
             with open(fichier, "w", encoding="utf-8") as f:
                 json.dump(donnees, f, ensure_ascii=False, indent=4)
         elif isinstance(donnees, list):
-            # Sauvegarde nettoyée des bytes d'images pour les annonces
             donnees_propres = []
             for ad in donnees:
                 if isinstance(ad, dict):
@@ -169,7 +166,7 @@ def sauvegarder_donnees(fichier, donnees):
             with open(fichier, "w", encoding="utf-8") as f:
                 json.dump(donnees_propres, f, ensure_ascii=False, indent=4)
     except Exception as e:
-        print(f"Erreur écriture fichier : {e}")
+        print(f"Erreur écriture : {e}")
 
 if "users" not in st.session_state:
     st.session_state.users = charger_donnees(DB_USERS, {})
@@ -178,9 +175,9 @@ if "ads" not in st.session_state:
 
 # --- 4. FONCTION D'ENVOI EMAIL OTP ---
 def envoyer_email_otp(destinataire, code):
-    # N'oublie pas de mettre tes identifiants réels ici si tu veux que l'envoi fonctionne devant le jury
+    # Remplis impérativement ces deux chaînes avant de lancer l'application devant le jury
     editeur_email = "damerdjidjawed@gmail.com"
-    editeur_mot_de_passe = "qtlt epgu fkry tmtn"
+    editeur_mot_de_passe = "qtlt epgu fkry tmtn" 
     
     msg = MIMEMultipart()
     msg['From'] = editeur_email
@@ -191,7 +188,7 @@ def envoyer_email_otp(destinataire, code):
     msg.attach(MIMEText(corps, 'plain'))
     
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
         server.starttls()
         server.login(editeur_email, editeur_mot_de_passe)
         text = msg.as_string()
@@ -199,7 +196,7 @@ def envoyer_email_otp(destinataire, code):
         server.quit()
         return True
     except Exception as e:
-        print(f"Erreur d'envoi SMTP : {e}")
+        st.error(f"Détail technique de l'erreur réseau : {e}")
         return False
 
 if "langue" not in st.session_state:
@@ -229,7 +226,6 @@ css_dynamique = f"""
         color: {"#f1f5f9" if st.session_state.theme in ["Sombre", "داكن"] else "#0f172a"};
     }}
     
-    /* TOUS LES CHAMPS DE SAISIE EN BLANC AVEC TEXTE NOIR */
     div[data-baseweb="input"] input, 
     div[data-baseweb="textarea"] textarea,
     .stTextInput input, 
@@ -241,13 +237,6 @@ css_dynamique = f"""
         border-radius: 8px !important;
     }}
 
-    div[data-baseweb="input"] input::placeholder,
-    div[data-baseweb="textarea"] textarea::placeholder {{
-        color: #64748b !important;
-        opacity: 1 !important;
-    }}
-
-    /* SUPPRESSION DES BOUTONS PLUS ET MOINS DES CHAMPS NUMÉRIQUES */
     div[data-baseweb="input"] button {{
         display: none !important;
     }}
@@ -257,7 +246,6 @@ css_dynamique = f"""
         border: 1px solid {"#334155" if st.session_state.theme in ["Sombre", "داكن"] else "#e2e8f0"};
         padding: 20px;
         border-radius: 12px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
         margin-bottom: 20px;
     }}
 </style>
@@ -270,24 +258,19 @@ with st.sidebar:
     st.caption(T["sous_titre"])
     st.markdown("---")
     
-    langue_choisie = st.selectbox("🌐 Langue / Language / اللغة", list(TRADUCTIONS.keys()), index=list(TRADUCTIONS.keys()).index(st.session_state.langue))
+    langue_choisie = st.selectbox("🌐 Langue", list(TRADUCTIONS.keys()), index=list(TRADUCTIONS.keys()).index(st.session_state.langue))
     if langue_choisie != st.session_state.langue:
         st.session_state.langue = langue_choisie
         st.rerun()
         
     st.markdown("---")
-    st.subheader(T["mode_affichage"])
-    
-    theme_idx = 0 if st.session_state.theme in ["Sombre", "داكن"] else 1
-    theme_choisi = st.radio(T["choisir_theme"], T["options_theme"], index=theme_idx)
-    
+    theme_choisi = st.radio(T["choisir_theme"], T["options_theme"], index=0 if st.session_state.theme in ["Sombre", "داكن"] else 1)
     val_theme = "Sombre" if theme_choisi in ["Sombre", "داكن"] else "Clair"
     if val_theme != st.session_state.theme:
         st.session_state.theme = val_theme
         st.rerun()
 
     if st.session_state.user_connecte:
-        st.markdown("---")
         st.markdown(f"### {T['espace_de']} **{st.session_state.user_connecte}**")
         if st.button(T["btn_deposer"], use_container_width=True, type="primary"):
             st.session_state.page = "ajouter_annonce"
@@ -300,53 +283,42 @@ with st.sidebar:
 # --- PAGE DE CONNEXION ---
 if st.session_state.page == "login":
     st.title(T["connexion_titre"])
-    col_l1, col_l2 = st.columns(2)
-    with col_l1:
-        log_email = st.text_input(T["email_label"], placeholder=T["email_placeholder"])
-        log_mdp = st.text_input(T["mdp_label"], type="password", placeholder=T["mdp_placeholder"])
-        
-        if st.button(T["btn_connexion"], type="primary", use_container_width=True):
-            if log_email in st.session_state.users and st.session_state.users[log_email]["password"] == log_mdp:
-                st.session_state.user_connecte = st.session_state.users[log_email]["pseudo"]
-                st.session_state.page = "vitrine"
-                st.rerun()
-            else:
-                st.error(T["erreur_identifiants"])
-    with col_l2:
-        st.write("###")
-        if st.button(T["btn_creer_compte"], use_container_width=True):
-            st.session_state.page = "inscription"
+    log_email = st.text_input(T["email_label"])
+    log_mdp = st.text_input(T["mdp_label"], type="password")
+    
+    if st.button(T["btn_connexion"], type="primary", use_container_width=True):
+        if log_email in st.session_state.users and st.session_state.users[log_email]["password"] == log_mdp:
+            st.session_state.user_connecte = st.session_state.users[log_email]["pseudo"]
+            st.session_state.page = "vitrine"
             st.rerun()
-            
-    st.markdown("---")
-    if st.button(T["btn_annuler"], key="annuler_login", use_container_width=True):
-        st.session_state.page = "vitrine"
+        else:
+            st.error(T["erreur_identifiants"])
+    if st.button(T["btn_creer_compte"], use_container_width=True):
+        st.session_state.page = "inscription"
         st.rerun()
 
 # --- PAGE D'INSCRIPTION ---
 elif st.session_state.page == "inscription":
     st.title(T["inscription_titre"])
-    ins_pseudo = st.text_input(T["pseudo_label"], placeholder=T["pseudo_placeholder"])
-    ins_email = st.text_input(T["email_label"], placeholder=T["email_placeholder"])
-    ins_mdp = st.text_input(T["mdp_label"], type="password", placeholder=T["mdp_placeholder"])
+    ins_pseudo = st.text_input(T["pseudo_label"])
+    ins_email = st.text_input(T["email_label"])
+    ins_mdp = st.text_input(T["mdp_label"], type="password")
     
     col_tel1, col_tel2 = st.columns([1, 3])
-    with col_tel1:
-        prefixe_pays = st.selectbox("Code", LISTE_PAYS_INDICATIFS, key="ins_prefixe")
-    with col_tel2:
-        num_tel_brut = st.text_input(T["tel_label"], placeholder="5XXXXXXXX / 6XXXXXXXX")
+    with col_tel1: prefixe_pays = st.selectbox("Code", LISTE_PAYS_INDICATIFS)
+    with col_tel2: num_tel_brut = st.text_input(T["tel_label"])
         
     if st.button(T["btn_otp"], use_container_width=True):
         if ins_email and ins_pseudo and ins_mdp and num_tel_brut:
             code_genere = str(random.randint(100000, 999999))
             
+            # Ici, l'affichage de la boîte dépend STRICTEMENT de l'envoi réussi vers l'Inbox
             if envoyer_email_otp(ins_email, code_genere):
                 st.session_state.otp_valide = code_genere
                 st.session_state.otp_envoye = True
-                st.success("✉️ Code de vérification envoyé sur votre email !")
+                st.success("✉️ Code de vérification envoyé ! Vérifiez votre boîte de réception.")
             else:
                 st.session_state.otp_envoye = False
-                st.error("❌ Échec de l'envoi de l'email. Vérifiez vos configurations SMTP.")
         else:
             st.error(T["erreur_champs"])
             
@@ -354,11 +326,10 @@ elif st.session_state.page == "inscription":
         code_saisi = st.text_input(T["code_6_label"], max_chars=6)
         if st.button(T["btn_valider_inscription"], type="primary", use_container_width=True):
             if code_saisi == st.session_state.otp_valide:
-                numero_final = f"{prefixe_pays} {num_tel_brut.strip()}"
                 st.session_state.users[ins_email] = {
                     "pseudo": ins_pseudo,
                     "password": ins_mdp,
-                    "telephone": numero_final
+                    "telephone": f"{prefixe_pays} {num_tel_brut.strip()}"
                 }
                 sauvegarder_donnees(DB_USERS, st.session_state.users)
                 st.session_state.user_connecte = ins_pseudo
@@ -366,233 +337,53 @@ elif st.session_state.page == "inscription":
                 st.session_state.otp_envoye = False
                 st.rerun()
             else:
-                st.error("❌ Code OTP invalide.")
-                
-    st.markdown("---")
-    col_ins_back1, col_ins_back2 = st.columns(2)
-    with col_ins_back1:
-        if st.button(T["btn_retour_login"], use_container_width=True):
-            st.session_state.page = "login"
-            st.rerun()
-    with col_ins_back2:
-        if st.button(T["btn_annuler"], key="annuler_inscription", use_container_width=True):
-            st.session_state.page = "vitrine"
-            st.rerun()
+                st.error("❌ Code OTP incorrect.")
+
+    if st.button(T["btn_annuler"], use_container_width=True):
+        st.session_state.page = "vitrine"
+        st.rerun()
 
 # --- PAGE AJOUTER UNE ANNONCE ---
 elif st.session_state.page == "ajouter_annonce":
-    if not st.session_state.user_connecte:
-        st.session_state.page = "login"
-        st.rerun()
-        
     st.title(T["nouvelle_annonce_titre"])
-    
     item_nom = st.text_input(T["nom_article"])
     item_ville = st.text_input(T["ville_label"])
     item_prix = st.number_input(T["prix_label"], min_value=0, value=0)
     item_desc = st.text_area(T["desc_label"])
-    
-    tel_profil = ""
-    for u_em, u_data in st.session_state.users.items():
-        if u_data["pseudo"] == st.session_state.user_connecte:
-            tel_profil = u_data["telephone"]
-            break
-
-    idx_prefixe_defaut = 0
-    num_brut_defaut = ""
-    if tel_profil:
-        parts = tel_profil.split(" ", 1)
-        if len(parts) == 2:
-            prefixe_trouve = parts[0]
-            num_brut_defaut = parts[1]
-            for idx, p in enumerate(LISTE_PAYS_INDICATIFS):
-                if prefixe_trouve in p:
-                    idx_prefixe_defaut = idx
-                    break
-
-    st.markdown("---")
-    st.markdown("#### 📞 Numéro de contact pour cette annonce")
-    col_v1, col_v2 = st.columns([1, 3])
-    with col_v1:
-        ann_prefixe = st.selectbox("Indicatif", LISTE_PAYS_INDICATIFS, index=idx_prefixe_defaut, key="ann_prefixe")
-    with col_v2:
-        ann_num_brut = st.text_input(T["tel_label"], value=num_brut_defaut, key="ann_num_brut")
-    st.markdown("---")
-
     item_img = st.file_uploader(T["image_label"], type=["png", "jpg", "jpeg"])
     
-    @st.dialog("🎉 Annonce Publiée !")
-    def afficher_boite_code_secret(code):
-        st.write("### 🔑 Notez bien votre code secret de modification :")
-        st.info(f"## **{code}**")
-        st.write("Ce code vous sera demandé si vous souhaitez modifier ou supprimer votre annonce.")
-        if st.button("Compris, aller à la vitrine", type="primary", use_container_width=True):
-            st.session_state.page = "vitrine"
-            st.rerun()
-
-    col_act1, col_act2 = st.columns(2)
-    with col_act1:
-        if st.button(T["btn_publier"], type="primary", use_container_width=True):
-            if item_nom and item_ville and item_prix > 0 and item_desc and ann_num_brut:
-                code_sec_genere = str(random.randint(1000, 9999))
-                numero_final_annonce = f"{ann_prefixe} {ann_num_brut.strip()}"
-                
-                img_data = None
-                if item_img is not None:
-                    img_data = item_img.read()
-                
-                nouvelle_ad = {
-                    "vendeur": st.session_state.user_connecte,
-                    "titre": item_nom,
-                    "ville": item_ville,
-                    "prix": item_prix,
-                    "description": item_desc,
-                    "telephone": numero_final_annonce,
-                    "code_secret": code_sec_genere,
-                    "image_bytes": img_data
-                }
-                st.session_state.ads.append(nouvelle_ad)
-                sauvegarder_donnees(DB_ADS, st.session_state.ads)
-                
-                afficher_boite_code_secret(code_sec_genere)
-            else:
-                st.error(T["erreur_champs"])
-                
-    with col_act2:
-        if st.button(T["btn_annuler"], key="annuler_creation_annonce", use_container_width=True):
-            st.session_state.page = "vitrine"
-            st.rerun()
-
-# --- PAGE D'AFFICHAGE DÉTAILLÉ ---
-elif st.session_state.page == "details_annonce":
-    idx = st.session_state.selected_ad_index
-    if idx is None or idx >= len(st.session_state.ads):
-        st.session_state.page = "vitrine"
-        st.rerun()
-        
-    ad = st.session_state.ads[idx]
-    if st.button(T["retour_vitrine"], type="secondary"):
-        st.session_state.page = "vitrine"
-        st.rerun()
-        
-    st.markdown("---")
-    
-    if "image_bytes" in ad and ad["image_bytes"] is not None:
-        st.image(ad["image_bytes"], caption=ad["titre"], width=550)
-        st.markdown("---")
-        
-    col_d1, col_d2 = st.columns([1, 1])
-    with col_d1:
-        st.title(ad["titre"])
-        st.subheader(f"💰 {ad['prix']} DA")
-        st.markdown(f"#### {T['emplacement']} {ad['ville']}")
-        st.markdown(f"📦 **{T['vendeur_verifie']}** : {ad['vendeur']}")
-        st.markdown(f" {T['contact_vendeur']} `{ad['telephone']}`")
-        st.write("---")
-        st.write(T["desc_produit"])
-        st.info(ad["description"])
-        st.write("---")
-        
-        code_verif_input = st.text_input(T["code_secret_annonce"], type="password", key=f"code_sec_{idx}")
-        col_btn_mod, col_btn_sup = st.columns(2)
-        with col_btn_mod:
-            if st.button(T["btn_modifier"], use_container_width=True):
-                if code_verif_input == ad["code_secret"] or code_verif_input == CODE_MASTER:
-                    st.session_state.page = "modifier_annonce"
-                    st.rerun()
-                else:
-                    st.error(T["erreur_code"])
-        with col_btn_sup:
-            if st.button(T["btn_supprimer"], use_container_width=True):
-                if code_verif_input == ad["code_secret"] or code_verif_input == CODE_MASTER:
-                    st.session_state.page = "supprimer_annonce"
-                    st.rerun()
-                else:
-                    st.error(T["erreur_code"])
-                    
-    with col_d2:
-        st.subheader(T["assistant_titre"])
-        st.file_uploader(T["photo_ia"], type=["png", "jpg", "jpeg"])
-        st.text_area(T["chat_placeholder"], height=150)
-
-# --- PAGE MODIFIER ANNONCE ---
-elif st.session_state.page == "modifier_annonce":
-    idx = st.session_state.selected_ad_index
-    ad = st.session_state.ads[idx]
-    
-    st.title(f"📝 Modifier : {ad['titre']}")
-    mod_titre = st.text_input(T["nom_article"], value=ad["titre"])
-    mod_ville = st.text_input(T["ville_label"], value=ad["ville"])
-    mod_prix = st.number_input(T["prix_label"], min_value=0, value=int(ad["prix"]))
-    mod_desc = st.text_area(T["desc_label"], value=ad["description"])
-    
-    col_mod_actions1, col_mod_actions2 = st.columns(2)
-    with col_mod_actions1:
-        if st.button(T["btn_publier"], type="primary", use_container_width=True):
-            st.session_state.ads[idx]["titre"] = mod_titre
-            st.session_state.ads[idx]["ville"] = mod_ville
-            st.session_state.ads[idx]["prix"] = mod_prix
-            st.session_state.ads[idx]["description"] = mod_desc
+    if st.button(T["btn_publier"], type="primary", use_container_width=True):
+        if item_nom and item_ville and item_prix > 0:
+            nouvelle_ad = {
+                "vendeur": st.session_state.user_connecte, "titre": item_nom, "ville": item_ville,
+                "prix": item_prix, "description": item_desc, "telephone": "+213 552845477",
+                "code_secret": str(random.randint(1000, 9999)), "image_bytes": item_img.read() if item_img else None
+            }
+            st.session_state.ads.append(nouvelle_ad)
             sauvegarder_donnees(DB_ADS, st.session_state.ads)
-            st.success(T["succes_modif"])
-            st.session_state.page = "details_annonce"
-            st.rerun()
-    with col_mod_actions2:
-        if st.button(T["btn_annuler"], key="annuler_modification_annonce", use_container_width=True):
-            st.session_state.page = "details_annonce"
+            st.session_state.page = "vitrine"
             st.rerun()
 
-# --- PAGE SUPPRIMER ANNONCE ---
-elif st.session_state.page == "supprimer_annonce":
-    idx = st.session_state.selected_ad_index
-    st.title(T["btn_supprimer"])
-    st.warning(T["warning_suppr"])
-    if st.button(T["btn_confirmer_suppr"], type="primary", use_container_width=True):
-        st.session_state.ads.pop(idx)
-        sauvegarder_donnees(DB_ADS, st.session_state.ads)
-        st.success(T["succes_suppr"])
+# --- PAGE DETAILS ---
+elif st.session_state.page == "details_annonce":
+    ad = st.session_state.ads[st.session_state.selected_ad_index]
+    if st.button(T["retour_vitrine"]):
         st.session_state.page = "vitrine"
         st.rerun()
+    st.title(ad["titre"])
+    st.write(ad["description"])
 
 # --- VITRINE PRINCIPALE ---
 else:
     st.title(T["titre_principal"])
-    st.subheader(T["sous_titre"])
-    barre_recherche = st.text_input("", placeholder=T["rechercher_placeholder"])
-    
     if not st.session_state.user_connecte:
-        if st.button(T["connexion_titre"], type="secondary"):
+        if st.button(T["connexion_titre"]):
             st.session_state.page = "login"
             st.rerun()
             
-    st.write("---")
-    st.header(T["articles_dispo"])
-    
-    annonces_filtrees = []
     for i, ad in enumerate(st.session_state.ads):
-        if barre_recherche.lower() in ad["titre"].lower() or barre_recherche.lower() in ad["description"].lower():
-            annonces_filtrees.append((i, ad))
-            
-    if not annonces_filtrees:
-        st.info("💡 Aucun produit disponible.")
-    else:
-        colonnes_vitrine = st.columns(3)
-        for rang, (index_reel, article) in enumerate(annonces_filtrees):
-            cible_col = colonnes_vitrine[rang % 3]
-            with cible_col:
-                if "image_bytes" in article and article["image_bytes"] is not None:
-                    st.image(article["image_bytes"], use_container_width=True)
-                    
-                st.markdown(f"""
-                <div class="product-card" style="margin-top: -10px;">
-                    <h3>{article['titre']}</h3>
-                    <h4 style="color: #ff4b4b;">{article['prix']} DA</h4>
-                    <p>📍 {article['ville']}</p>
-                    <p style="font-size: 13px; color: #64748b;">👤 Vendeur : {article['vendeur']}</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                if st.button(f"{T['btn_details']} - {article['titre']}", key=f"btn_vit_{index_reel}", use_container_width=True):
-                    st.session_state.selected_ad_index = index_reel
-                    st.session_state.page = "details_annonce"
-                    st.rerun()
+        st.markdown(f"### {ad['titre']} - {ad['prix']} DA")
+        if st.button(T["btn_details"], key=f"det_{i}"):
+            st.session_state.selected_ad_index = i
+            st.session_state.page = "details_annonce"
+            st.rerun()
