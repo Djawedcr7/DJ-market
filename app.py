@@ -174,6 +174,7 @@ if "ads" not in st.session_state:
 
 # --- 4. FONCTION D'ENVOI EMAIL OTP ---
 def envoyer_email_otp(destinataire, code):
+    # Remplir impérativement avec tes identifiants Gmail valides avant de lancer devant le jury
     editeur_email = "damerdjidjawed@gmail.com"
     editeur_mot_de_passe = "qtlt epgu fkry tmtn"
     
@@ -213,8 +214,6 @@ if "otp_valide" not in st.session_state:
     st.session_state.otp_valide = None
 if "otp_envoye" not in st.session_state:
     st.session_state.otp_envoye = False
-if "msg_secours_otp" not in st.session_state:
-    st.session_state.msg_secours_otp = ""
 
 T = TRADUCTIONS.get(st.session_state.langue, TRADUCTIONS["Français"])
 
@@ -336,25 +335,19 @@ elif st.session_state.page == "inscription":
     if st.button(T["btn_otp"], use_container_width=True):
         if ins_email and ins_pseudo and ins_mdp and num_tel_brut:
             code_genere = str(random.randint(100000, 999999))
-            st.session_state.otp_valide = code_genere
-            st.session_state.otp_envoye = True
             
-            # Essai d'envoi d'email
-            succes = envoyer_email_otp(ins_email, code_genere)
-            if succes:
-                st.session_state.msg_secours_otp = "succes"
+            # ORIGINEL STRICT : L'état d'envoi dépend UNIQUEMENT de la réussite SMTP
+            if envoyer_email_otp(ins_email, code_genere):
+                st.session_state.otp_valide = code_genere
+                st.session_state.otp_envoye = True
+                st.success("✉️ Code de vérification envoyé sur votre email !")
             else:
-                # Mode secours automatique activé pour ne pas bloquer l'utilisateur si le SMTP échoue
-                st.session_state.msg_secours_otp = f"⚠️ Mode secours (SMTP non configuré) : Utilisez le code local -> {code_genere}"
+                st.session_state.otp_envoye = False
+                st.error("❌ Échec de l'envoi de l'email. Vérifiez vos configurations SMTP.")
         else:
             st.error(T["erreur_champs"])
             
-    # Affichage des retours d'état de l'envoi
-    if st.session_state.msg_secours_otp == "succes":
-        st.success("✉️ Code de vérification envoyé sur votre email !")
-    elif st.session_state.msg_secours_otp.startswith("⚠️"):
-        st.warning(st.session_state.msg_secours_otp)
-
+    # La case pour taper le code s'affiche UNIQUEMENT si l'email est parti avec succès
     if st.session_state.otp_envoye:
         code_saisi = st.text_input(T["code_6_label"], max_chars=6)
         if st.button(T["btn_valider_inscription"], type="primary", use_container_width=True):
@@ -368,8 +361,6 @@ elif st.session_state.page == "inscription":
                 sauvegarder_donnees(DB_USERS, st.session_state.users)
                 st.session_state.user_connecte = ins_pseudo
                 st.session_state.page = "vitrine"
-                # Reset des messages OTP
-                st.session_state.msg_secours_otp = ""
                 st.session_state.otp_envoye = False
                 st.rerun()
             else:
