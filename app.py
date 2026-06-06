@@ -60,7 +60,7 @@ TRADUCTIONS = {
         "desc_produit": "📝 Description du produit :",
         "btn_modifier": "📝 Modifier cette annonce",
         "btn_supprimer": "❌ Supprimer cette annonce",
-        "code_secret_annonce": "Entrez le code secret de l'annonce",
+        "code_secret_annonce": "Entrez le code secret (ou Code Master)",
         "btn_verif_code": "Vérifier le code",
         "erreur_code": "❌ Code secret incorrect.",
         "erreur_champs": "❌ Veuillez remplir tous les champs.",
@@ -71,7 +71,7 @@ TRADUCTIONS = {
         "succes_suppr": "Annonce supprimée avec succès."
     },
     "العربية": {
-        "titre_principal": "⚡ سوق دزاير(Souk DZ)",
+        "titre_principal": "⚡ سوق دز (Souk DZ)",
         "sous_titre": "منصة آمنة للمستعمل مع حفظ دائم للبيانات",
         "mode_affichage": "🎨 وضع العرض",
         "choisir_theme": "اختر المظهر:",
@@ -115,7 +115,7 @@ TRADUCTIONS = {
         "desc_produit": "📝 وصف المنتج:",
         "btn_modifier": "📝 تعديل هذا الإعلان",
         "btn_supprimer": "❌ حذف هذا الإعلان",
-        "code_secret_annonce": "أدخل الرمز السري للإعلان",
+        "code_secret_annonce": "أدخل الرمز السري (أو الرمز الرئيسي)",
         "btn_verif_code": "التحقق من الرمز",
         "erreur_code": "❌ الرمز السري غير صحيح.",
         "erreur_champs": "❌ يرجى ملء جميع الحقول.",
@@ -126,6 +126,9 @@ TRADUCTIONS = {
         "succes_suppr": "تم حذف الإعلان بنجاح."
     }
 }
+
+# 🔑 CODE MASTER ADMINISTRATEUR POUR LES TESTS
+CODE_MASTER = "0000"
 
 LISTE_PAYS_INDICATIFS = [
     "🇩🇿 +213", "🇲🇦 +212", "🇹🇳 +216", "🇪🇬 +20", "🇱🇾 +218", "🇲🇷 +222",
@@ -148,12 +151,20 @@ def charger_donnees(fichier, par_defaut):
     return par_defaut
 
 def sauvegarder_donnees(fichier, donnees):
+    # 🛠️ AJOUT COMPATIBILITÉ : Si c'est le dictionnaire des utilisateurs
+    if isinstance(donnees, dict):
+        with open(fichier, "w", encoding="utf-8") as f:
+            json.dump(donnees, f, ensure_ascii=False, indent=4)
+        return
+
+    # Si ce sont les annonces (liste)
     donnees_propres = []
     for ad in donnees:
-        ad_copie = ad.copy()
-        if "image_bytes" in ad_copie:
-            ad_copie.pop("image_bytes")
-        donnees_propres.append(ad_copie)
+        if isinstance(ad, dict):
+            ad_copie = ad.copy()
+            if "image_bytes" in ad_copie:
+                ad_copie.pop("image_bytes")
+            donnees_propres.append(ad_copie)
         
     with open(fichier, "w", encoding="utf-8") as f:
         json.dump(donnees_propres, f, ensure_ascii=False, indent=4)
@@ -482,14 +493,14 @@ elif st.session_state.page == "details_annonce":
         col_btn_mod, col_btn_sup = st.columns(2)
         with col_btn_mod:
             if st.button(T["btn_modifier"], use_container_width=True):
-                if code_verif_input == ad["code_secret"]:
+                if code_verif_input == ad["code_secret"] or code_verif_input == CODE_MASTER:
                     st.session_state.page = "modifier_annonce"
                     st.rerun()
                 else:
                     st.error(T["erreur_code"])
         with col_btn_sup:
             if st.button(T["btn_supprimer"], use_container_width=True):
-                if code_verif_input == ad["code_secret"]:
+                if code_verif_input == ad["code_secret"] or code_verif_input == CODE_MASTER:
                     st.session_state.page = "supprimer_annonce"
                     st.rerun()
                 else:
