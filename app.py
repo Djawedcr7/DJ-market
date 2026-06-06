@@ -151,13 +151,11 @@ def charger_donnees(fichier, par_defaut):
     return par_defaut
 
 def sauvegarder_donnees(fichier, donnees):
-    # 🛠️ AJOUT COMPATIBILITÉ : Si c'est le dictionnaire des utilisateurs
     if isinstance(donnees, dict):
         with open(fichier, "w", encoding="utf-8") as f:
             json.dump(donnees, f, ensure_ascii=False, indent=4)
         return
 
-    # Si ce sont les annonces (liste)
     donnees_propres = []
     for ad in donnees:
         if isinstance(ad, dict):
@@ -339,11 +337,12 @@ elif st.session_state.page == "inscription":
             st.session_state.otp_valide = code_genere
             st.session_state.otp_envoye = True
             
+            # REVENU À L'ORIGINAL : Envoi unique par mail, pas de texte de secours affiché
             succes = envoyer_email_otp(ins_email, code_genere)
             if succes:
                 st.success("✉️ Code de vérification envoyé sur votre email !")
             else:
-                st.warning(f"💡 Mode démo/secours : Code généré -> {code_genere}")
+                st.error("❌ Échec de l'envoi de l'email. Vérifiez vos configurations SMTP.")
         else:
             st.error(T["erreur_champs"])
             
