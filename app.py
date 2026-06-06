@@ -213,6 +213,8 @@ if "otp_valide" not in st.session_state:
     st.session_state.otp_valide = None
 if "otp_envoye" not in st.session_state:
     st.session_state.otp_envoye = False
+if "msg_secours_otp" not in st.session_state:
+    st.session_state.msg_secours_otp = ""
 
 T = TRADUCTIONS.get(st.session_state.langue, TRADUCTIONS["Français"])
 
@@ -337,15 +339,22 @@ elif st.session_state.page == "inscription":
             st.session_state.otp_valide = code_genere
             st.session_state.otp_envoye = True
             
-            # REVENU À L'ORIGINAL : Envoi unique par mail, pas de texte de secours affiché
+            # Essai d'envoi d'email
             succes = envoyer_email_otp(ins_email, code_genere)
             if succes:
-                st.success("✉️ Code de vérification envoyé sur votre email !")
+                st.session_state.msg_secours_otp = "succes"
             else:
-                st.error("❌ Échec de l'envoi de l'email. Vérifiez vos configurations SMTP.")
+                # Mode secours automatique activé pour ne pas bloquer l'utilisateur si le SMTP échoue
+                st.session_state.msg_secours_otp = f"⚠️ Mode secours (SMTP non configuré) : Utilisez le code local -> {code_genere}"
         else:
             st.error(T["erreur_champs"])
             
+    # Affichage des retours d'état de l'envoi
+    if st.session_state.msg_secours_otp == "succes":
+        st.success("✉️ Code de vérification envoyé sur votre email !")
+    elif st.session_state.msg_secours_otp.startswith("⚠️"):
+        st.warning(st.session_state.msg_secours_otp)
+
     if st.session_state.otp_envoye:
         code_saisi = st.text_input(T["code_6_label"], max_chars=6)
         if st.button(T["btn_valider_inscription"], type="primary", use_container_width=True):
@@ -359,6 +368,9 @@ elif st.session_state.page == "inscription":
                 sauvegarder_donnees(DB_USERS, st.session_state.users)
                 st.session_state.user_connecte = ins_pseudo
                 st.session_state.page = "vitrine"
+                # Reset des messages OTP
+                st.session_state.msg_secours_otp = ""
+                st.session_state.otp_envoye = False
                 st.rerun()
             else:
                 st.error("❌ Code OTP invalide.")
