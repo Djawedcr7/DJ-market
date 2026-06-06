@@ -150,22 +150,26 @@ def charger_donnees(fichier, par_defaut):
             return par_defaut
     return par_defaut
 
+# CORRECTION SÉCURISÉE DE LA SAUVEGARDE JSON (Évite l'AttributeError)
 def sauvegarder_donnees(fichier, donnees):
-    if isinstance(donnees, dict):
-        with open(fichier, "w", encoding="utf-8") as f:
-            json.dump(donnees, f, ensure_ascii=False, indent=4)
-        return
-
-    donnees_propres = []
-    for ad in donnees:
-        if isinstance(ad, dict):
-            ad_copie = ad.copy()
-            if "image_bytes" in ad_copie:
-                ad_copie.pop("image_bytes")
-            donnees_propres.append(ad_copie)
-        
-    with open(fichier, "w", encoding="utf-8") as f:
-        json.dump(donnees_propres, f, ensure_ascii=False, indent=4)
+    try:
+        if isinstance(donnees, dict):
+            # Sauvegarde directe pour les utilisateurs
+            with open(fichier, "w", encoding="utf-8") as f:
+                json.dump(donnees, f, ensure_ascii=False, indent=4)
+        elif isinstance(donnees, list):
+            # Sauvegarde nettoyée des bytes d'images pour les annonces
+            donnees_propres = []
+            for ad in donnees:
+                if isinstance(ad, dict):
+                    ad_copie = ad.copy()
+                    if "image_bytes" in ad_copie:
+                        ad_copie.pop("image_bytes")
+                    donnees_propres.append(ad_copie)
+            with open(fichier, "w", encoding="utf-8") as f:
+                json.dump(donnees_propres, f, ensure_ascii=False, indent=4)
+    except Exception as e:
+        print(f"Erreur écriture fichier : {e}")
 
 if "users" not in st.session_state:
     st.session_state.users = charger_donnees(DB_USERS, {})
@@ -174,7 +178,7 @@ if "ads" not in st.session_state:
 
 # --- 4. FONCTION D'ENVOI EMAIL OTP ---
 def envoyer_email_otp(destinataire, code):
-    # Remplir impérativement avec tes identifiants Gmail valides avant de lancer devant le jury
+    # N'oublie pas de mettre tes identifiants réels ici si tu veux que l'envoi fonctionne devant le jury
     editeur_email = "damerdjidjawed@gmail.com"
     editeur_mot_de_passe = "qtlt epgu fkry tmtn"
     
@@ -290,7 +294,7 @@ with st.sidebar:
             st.rerun()
         if st.button(T["btn_deconnexion"], use_container_width=True):
             st.session_state.user_connecte = None
-            st.session_state.page = "login"
+            st.session_state.page = "vitrine"
             st.rerun()
 
 # --- PAGE DE CONNEXION ---
@@ -336,7 +340,6 @@ elif st.session_state.page == "inscription":
         if ins_email and ins_pseudo and ins_mdp and num_tel_brut:
             code_genere = str(random.randint(100000, 999999))
             
-            # ORIGINEL STRICT : L'état d'envoi dépend UNIQUEMENT de la réussite SMTP
             if envoyer_email_otp(ins_email, code_genere):
                 st.session_state.otp_valide = code_genere
                 st.session_state.otp_envoye = True
@@ -347,7 +350,6 @@ elif st.session_state.page == "inscription":
         else:
             st.error(T["erreur_champs"])
             
-    # La case pour taper le code s'affiche UNIQUEMENT si l'email est parti avec succès
     if st.session_state.otp_envoye:
         code_saisi = st.text_input(T["code_6_label"], max_chars=6)
         if st.button(T["btn_valider_inscription"], type="primary", use_container_width=True):
@@ -461,7 +463,7 @@ elif st.session_state.page == "ajouter_annonce":
             st.session_state.page = "vitrine"
             st.rerun()
 
-# --- PAGE DÉTAILS DE L'ANNONCE ---
+# --- PAGE D'AFFICHAGE DÉTAILLÉ ---
 elif st.session_state.page == "details_annonce":
     idx = st.session_state.selected_ad_index
     if idx is None or idx >= len(st.session_state.ads):
@@ -552,7 +554,7 @@ elif st.session_state.page == "supprimer_annonce":
         st.session_state.page = "vitrine"
         st.rerun()
 
-# --- PAGE PRINCIPALE : VITRINE DES PRODUITS ---
+# --- VITRINE PRINCIPALE ---
 else:
     st.title(T["titre_principal"])
     st.subheader(T["sous_titre"])
